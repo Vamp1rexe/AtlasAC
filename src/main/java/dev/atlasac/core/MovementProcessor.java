@@ -1,0 +1,148 @@
+package dev.atlasac.core;
+
+import dev.atlasac.AtlasAC;
+import dev.atlasac.check.CheckManager;
+import dev.atlasac.data.MoveSample;
+import dev.atlasac.data.PlayerData;
+import dev.atlasac.util.Physics;
+import org.bukkit.GameMode;
+import org.bukkit.Location;
+import org.bukkit.World;
+import org.bukkit.entity.Player;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.BoundingBox;
+
+/** Wertet jeden Server-Tick die gesammelten Flying-Packets aller Spieler aus. */
+public final class MovementProcessor {
+	private final AtlasAC plugin;
+
+	public MovementProcessor(AtlasAC plugin) {
+		this.plugin = plugin;
+	}
+
+	public void tick(int tick) {
+		CheckManager checks = plugin.checks();
+		for (PlayerData d : plugin.data().all()) {
+			Player p = d.player();
+			if (!p.isOnline()) continue;
+			MoveSample s;
+			while ((s = d.moves.poll()) != null) {
+				if (process(d, p, s, tick, checks)) {
+					d.moves.clear();
+					break;
+				}
+			}
+			checks.velocity.tick(d, p, tick);
+			Location eye = p.getEyeLocation();
+			d.history.record(tick, p.getBoundingBox(), eye.getX(), eye.getY(), eye.getZ());
+		}
+	}
+
+	/** @return true, wenn ein Setback ausgefuehrt wurde */
+	private boolean process(PlayerData d, Player p, MoveSample s, int tick, CheckManager checks) {
+		boolean exempt = movementExempt(p, d, tick);
+
+		if (s.hasRotation()) {
+			if (d.hasLastRotation && !d.bypass && tick >= d.exemptUntil) {
+				float dYaw = s.yaw() - d.lastYaw;
+				float dPitch = s.pitch() - d.lastPitch;
+				boolean combat = tick - d.lastAttackServerTick < 40;
+				checks.aimSnap.check(d, dYaw, d.lastDeltaYaw);
+				checks.aimSensitivity.check(d, dPitch, d.lastDeltaPitch, s.pitch(), combat);
+				d.lastDeltaYaw = dYaw;
+				d.lastDeltaPitch = dPitch;
+			} else {
+				d.lastDeltaYaw = 0;
+				d.lastDeltaPitch = 0;
+			}
+			d.lastYaw = s.yaw();
+			d.lastPitch = s.pitch();
+			d.hasLastRotation = true;
+		}
+
+		if (!s.hasPosition()) {
+			d.hasLastDelta = false;
+			d.lastSampleTick = Long.MIN_VALUE;
+			return false;
+		}
+
+		World world = p.getWorld();
+		if (!d.hasLast) {
+			d.lastX = s.x();
+			d.lastY = s.y();
+			d.lastZ = s.z();
+			d.hasLast = true;
+			d.hasLastDelta = false;
+			d.lastSampleTick = s.clientTick();
+			return false;
+		}
+
+		double dx = s.x() - d.lastX, dy = s.y() - d.lastY, dz = s.z() - d.lastZ;
+		boolean consecutive = d.tickEndSupported && s.clientTick() == d.lastSampleTick + 1;
+		BoundingBox box = Physics.boxAt(p, s.x(), s.y(), s.z());
+		boolean serverGround = Physics.onGround(world, box);
+		checks.velocity.onMove(d, dx, dz, tick);
+
+		boolean setback = false;
+		if (!exempt && !Physics.complexNearby(world, box)) {
+			if (checks.groundSpoof.check(d, s.onGround(), serverGround)) d.spoofedFall = true;
+
+			if (consecutive) {
+				boolean ceiling = Physics.ceiling(world, box);
+				if (d.lastServerGround && !serverGround && dy > 0 && !ceiling) {
+					if (checks.jump.check(d, p, dy) && checks.jump.cancel()) setback = true;
+				}
+				if (!d.lastServerGround && !serverGround && d.hasLastDelta && !ceiling
+						&& !Physics.entitiesNearby(p, box, 1.0)) {
+					if (checks.gravity.check(d, dy, d.lastDeltaY) && checks.gravity.cancel()) setback = true;
+					double h = Math.hypot(dx, dz), lastH = Math.hypot(d.lastDeltaX, d.lastDeltaZ);
+					if (checks.air.check(d, h, lastH) && checks.air.cancel()) setback = true;
+				}
+			}
+		}
+
+		// Eigene Fallhoehe – gleicht NoFall (gespoofter Boden) aus
+		if (!serverGround) {
+			if (dy < 0) d.fallDistance -= dy;
+		} else {
+			if (d.spoofedFall && d.fallDistance > 3.5 && checks.groundSpoof.cancel() && !exempt) {
+				p.damage(d.fallDistance - 3.0);
+			}
+			d.fallDistance = 0;
+			d.spoofedFall = false;
+		}
+
+		d.lastDeltaX = dx;
+		d.lastDeltaY = dy;
+		d.lastDeltaZ = dz;
+		d.hasLastDelta = consecutive;
+		d.lastServerGround = serverGround;
+		d.lastClientGround = s.onGround();
+		d.serverAirTicks = serverGround ? 0 : d.serverAirTicks + 1;
+		d.lastX = s.x();
+		d.lastY = s.y();
+		d.lastZ = s.z();
+		d.lastSampleTick = s.clientTick();
+
+		if (setback && d.lastLegit != null && d.lastLegit.getWorld() == world) {
+			Location to = d.lastLegit.clone();
+			to.setYaw(d.lastYaw);
+			to.setPitch(d.lastPitch);
+			p.teleport(to);
+			return true;
+		}
+		if (serverGround && !setback) {
+			d.lastLegit = new Location(world, s.x(), s.y(), s.z());
+		}
+		return false;
+	}
+
+	private static boolean movementExempt(Player p, PlayerData d, int tick) {
+		GameMode gm = p.getGameMode();
+		if (gm == GameMode.CREATIVE || gm == GameMode.SPECTATOR) return true;
+		if (d.bypass || tick < d.exemptUntil || tick < d.movementExemptUntil || d.pendingVelocity != null) return true;
+		if (p.getAllowFlight() || p.isFlying() || p.isGliding() || p.isInsideVehicle() || p.isRiptiding()
+				|| p.isDead() || p.isClimbing() || p.isInWater() || p.isSwimming() || p.isSleeping()) return true;
+		return p.hasPotionEffect(PotionEffectType.LEVITATION) || p.hasPotionEffect(PotionEffectType.SLOW_FALLING);
+	}
+}

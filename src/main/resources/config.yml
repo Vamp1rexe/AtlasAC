@@ -1,0 +1,244 @@
+# ─────────────────────────────────────────────────────────────
+#  AtlasAC – Atlas AntiCheat
+#  Alle Texte nutzen MiniMessage (https://docs.advntr.dev/minimessage/format.html)
+#  Platzhalter: %player% %check% %vl% %max% %info% %ping%
+# ─────────────────────────────────────────────────────────────
+
+prefix: "<dark_gray>[<gradient:#7b5cff:#00d4ff><bold>Atlas</bold></gradient><dark_gray>] "
+
+alerts:
+  # Alerts an Spieler mit atlasac.alerts (mit /atlas alerts an-/ausschaltbar)
+  format: "<click:run_command:'/tp %player%'><hover:show_text:'<gray>%info%<newline><dark_gray>Ping: %ping%ms<newline><yellow>Klicken zum Teleportieren'>%prefix%<white>%player% <gray>flagged <aqua>%check%</aqua> <dark_gray>(<red>x%vl%</red><dark_gray>/%max%)</hover></click>"
+  # Mindestabstand zwischen zwei Alerts desselben Checks pro Spieler (ms)
+  cooldown-ms: 300
+  console: true
+
+punishment:
+  # Befehle, die beim Erreichen von max-vl ausgefuehrt werden (ohne fuehrenden /, laufen ueber die Konsole).
+  # Fuer LiteBans z.B.: "litebans:kick %player% Kicked by Atlas AntiCheat"
+  commands:
+    - "kick %player% Kicked by Atlas AntiCheat"
+  broadcast: "%prefix%<red>%player% <gray>wurde von Atlas wegen <aqua>%check%</aqua> gekickt."
+
+violations:
+  # Alle 60 Sekunden wird jede VL um "decay" des jeweiligen Checks reduziert
+  decay-interval-seconds: 60
+
+# ─────────────────────────────────────────────────────────────
+#  Checks
+#  enabled   – Check aktiv
+#  max-vl    – ab dieser VL wird bestraft (nur wenn punish: true)
+#  punish    – false = nur Alerts
+#  buffer    – so viele "verdaechtige" Events muessen sich ansammeln, bevor geflaggt wird
+#  decay     – VL-Abbau pro Intervall
+#  cancel    – Treffer abbrechen bzw. Setback ausfuehren
+# ─────────────────────────────────────────────────────────────
+checks:
+  # ── PvP ────────────────────────────────────────────────────
+  reach:
+    enabled: true
+    max-vl: 10
+    punish: true
+    buffer: 1.5
+    decay: 2
+    cancel: true
+    # Toleranz auf die Interaction-Range des Spielers (Attribut, Standard 3.0)
+    tolerance: 0.1
+    # Zusaetzliche Toleranz bei Mobs (keine Lag-Compensation-Historie)
+    mob-tolerance: 0.4
+    # Speere (26.x) haben eigene Reichweiten -> Check ueberspringen
+    ignore-spears: true
+  hitbox:
+    enabled: true
+    max-vl: 15
+    punish: true
+    buffer: 3
+    decay: 2
+    cancel: true
+    # Hitbox-Vergroesserung fuer den Blickstrahl
+    expand: 0.12
+  killaura-multi:
+    enabled: true
+    max-vl: 5
+    punish: true
+    buffer: 0
+    decay: 1
+  killaura-wall:
+    enabled: true
+    max-vl: 10
+    punish: true
+    buffer: 2
+    decay: 2
+    cancel: true
+  killaura-noswing:
+    enabled: true
+    max-vl: 8
+    punish: true
+    buffer: 2
+    decay: 1
+  aim-sensitivity:
+    enabled: true
+    max-vl: 30
+    punish: false
+    buffer: 12
+    decay: 5
+  aim-snap:
+    enabled: true
+    max-vl: 10
+    punish: true
+    buffer: 0
+    decay: 2
+  aim-lock:
+    enabled: true
+    max-vl: 8
+    punish: false
+    buffer: 0
+    decay: 2
+    # Anzahl Treffer, ueber die die Zielpraezision ausgewertet wird
+    samples: 20
+    # Standardabweichung (Grad) des Ziel-Offsets, unter der geflaggt wird
+    max-deviation: 0.35
+  autoclicker-cps:
+    enabled: true
+    max-vl: 10
+    punish: true
+    buffer: 2
+    decay: 2
+    max-cps: 20
+  autoclicker-consistency:
+    enabled: true
+    max-vl: 10
+    punish: false
+    buffer: 2
+    decay: 2
+    # Standardabweichung der Klickabstaende (ms), unter der geflaggt wird
+    min-deviation-ms: 9.0
+    # Ab dieser CPS wird die Konsistenz geprueft
+    min-cps: 9
+  velocity:
+    enabled: true
+    max-vl: 10
+    punish: true
+    buffer: 2
+    decay: 2
+    # Mindestanteil des erhaltenen Knockbacks, den der Spieler umsetzen muss
+    min-ratio: 0.45
+  criticals:
+    enabled: true
+    max-vl: 10
+    punish: true
+    buffer: 2
+    decay: 2
+    cancel: true
+
+  # ── Movement (Prediction) ──────────────────────────────────
+  prediction-gravity:
+    enabled: true
+    max-vl: 20
+    punish: true
+    buffer: 4
+    decay: 3
+    cancel: false
+    threshold: 0.03
+  prediction-air:
+    enabled: true
+    max-vl: 20
+    punish: true
+    buffer: 4
+    decay: 3
+    cancel: false
+    threshold: 0.006
+  prediction-jump:
+    enabled: true
+    max-vl: 15
+    punish: true
+    buffer: 2
+    decay: 2
+    cancel: false
+  groundspoof:
+    enabled: true
+    max-vl: 15
+    punish: true
+    buffer: 4
+    decay: 3
+    # true = Fallschaden wird trotz NoFall nachtraeglich angewendet
+    cancel: true
+  timer:
+    enabled: true
+    max-vl: 15
+    punish: true
+    buffer: 0
+    decay: 3
+    # So viele ms darf ein Client "vorauslaufen", bevor geflaggt wird
+    max-balance-ms: 150
+    # Maximal angespartes Lag-Guthaben (ms)
+    min-balance-ms: -500
+
+# ─────────────────────────────────────────────────────────────
+#  Anti-XRay (Abbau-Alerts) – auch ingame per /atlas xray (GUI) einstellbar
+# ─────────────────────────────────────────────────────────────
+xray:
+  enabled: true
+  # Von Spielern platzierte Erze nicht mitzaehlen
+  ignore-placed-blocks: true
+  # Mindestabstand zwischen zwei Alerts derselben Gruppe pro Spieler (Sekunden)
+  alert-cooldown-seconds: 60
+  # Zaehlt abgebauten Stein mit, um das Erz/Stein-Verhaeltnis im Alert anzuzeigen
+  stone-blocks: [STONE, DEEPSLATE, TUFF, GRANITE, DIORITE, ANDESITE, NETHERRACK, BASALT, BLACKSTONE, CALCITE]
+  format: "<click:run_command:'/tp %player%'><hover:show_text:'<gray>Stein abgebaut: <white>%stone%<newline><gray>Erze pro 100 Stein: <white>%ratio%<newline><gray>Ort: <white>%location%<newline><yellow>Klicken zum Teleportieren'>%prefix%<gold>XRay? <white>%player% <gray>hat <red>%count%x %group% <gray>in <white>%window% Min.</gray> abgebaut</hover></click>"
+  groups:
+    diamond:
+      display: "Diamanterz"
+      icon: DIAMOND_ORE
+      materials: [DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE]
+      enabled: true
+      max-blocks: 12
+      window-minutes: 10
+    ancient-debris:
+      display: "Antiker Schrott"
+      icon: ANCIENT_DEBRIS
+      materials: [ANCIENT_DEBRIS]
+      enabled: true
+      max-blocks: 8
+      window-minutes: 15
+    emerald:
+      display: "Smaragderz"
+      icon: EMERALD_ORE
+      materials: [EMERALD_ORE, DEEPSLATE_EMERALD_ORE]
+      enabled: true
+      max-blocks: 8
+      window-minutes: 10
+    gold:
+      display: "Golderz"
+      icon: GOLD_ORE
+      materials: [GOLD_ORE, DEEPSLATE_GOLD_ORE]
+      enabled: false
+      max-blocks: 40
+      window-minutes: 10
+    spawner:
+      display: "Spawner"
+      icon: SPAWNER
+      materials: [SPAWNER]
+      enabled: true
+      max-blocks: 3
+      window-minutes: 30
+
+# ─────────────────────────────────────────────────────────────
+#  Anti-Dupe – jedes nicht stapelbare Item bekommt eine versteckte ID
+# ─────────────────────────────────────────────────────────────
+anti-dupe:
+  enabled: true
+  # Alle X Ticks werden alle Online-Inventare, Enderkisten und offenen Container gescannt
+  scan-interval-ticks: 100
+  # Auf dem Boden liegende Items mit scannen
+  scan-dropped-items: true
+  # true = ALLE Kopien loeschen (auch das vermutliche Original), false = eine Kopie bleibt
+  remove-all-copies: false
+  # Stack mit Menge > 1 bei eigentlich nicht stapelbaren Items = Dupe
+  flag-overstacked: true
+  # Materialien, die nie getaggt werden
+  ignore-materials: []
+  # VL-Punkte pro erkanntem Dupe (Check "dupe")
+  max-vl: 1
+  punish: true
+  format: "%prefix%<dark_red><bold>DUPE</bold> <white>%player% <gray>– <red>%amount%x %item% <gray>mit gleicher ID <dark_gray>(%id%)<gray> erkannt und geloescht."

@@ -1,0 +1,13 @@
+name: AtlasAC
+version: '${version}'
+main: dev.atlasac.AtlasAC
+api-version: '26.3'
+description: Atlas AntiCheat – Prediction-Movement, starke PvP-Checks, Anti-XRay-Alerts und Anti-Dupe ueber versteckte Item-IDs.
+authors:
+  - Robert
+dependencies:
+  server:
+    packetevents:
+      load: BEFORE
+      required: true
+      join-classpath: true
