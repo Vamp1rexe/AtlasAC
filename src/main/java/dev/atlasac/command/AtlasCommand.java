@@ -124,7 +124,8 @@ public final class AtlasCommand implements BasicCommand {
 					s.sendMessage(Text.mm("<dark_gray> » <aqua>" + Text.escape(g.display) + " " + color + c + "<dark_gray>/" + g.maxBlocks
 							+ " <gray>in " + g.windowMinutes + " Min."));
 				}
-				s.sendMessage(Text.mm("<dark_gray> » <gray>Stein (60 Min.): <white>" + stats.getOrDefault("__stone", 0)));
+				s.sendMessage(Text.mm("<dark_gray> » " + "<gray>Gestein (60 Min.): <white>" + stats.getOrDefault("__stone", 0) + " Stein <dark_gray>| <white>"
+						+ stats.getOrDefault("__deepslate", 0) + " Tiefenschiefer <dark_gray>| <white>" + stats.getOrDefault("__netherrack", 0) + " Netherrack"));
 			}
 			case "reset" -> {
 				if (t == null) {

@@ -258,7 +258,11 @@ public final class AdminGui {
 			String color = c >= g.maxBlocks ? "<red>" : c >= g.maxBlocks / 2 ? "<yellow>" : "<green>";
 			xray.add("<gray>" + Text.escape(g.display) + ": " + color + c + "<dark_gray>/" + g.maxBlocks + " (" + g.windowMinutes + " Min.)");
 		}
-		xray.add("<gray>Stein (60 Min.): <white>" + stats.getOrDefault("__stone", 0));
+		xray.add("");
+		xray.add("<gray>Gestein (60 Min.):");
+		xray.add("<gray>  Stein: <white>" + stats.getOrDefault("__stone", 0));
+		xray.add("<gray>  Tiefenschiefer: <white>" + stats.getOrDefault("__deepslate", 0));
+		xray.add("<gray>  Netherrack: <white>" + stats.getOrDefault("__netherrack", 0));
 		m.set(40, Menu.item(Material.DIAMOND_ORE, "<aqua><bold>XRay-Statistik", xray));
 		m.set(49, Menu.item(Material.ARROW, "<yellow>« Zurueck"), e -> openPlayer(viewer, id));
 		m.fill(Material.BLACK_STAINED_GLASS_PANE).open(viewer);

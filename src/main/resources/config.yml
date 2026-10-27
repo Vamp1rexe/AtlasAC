@@ -360,10 +360,14 @@ xray:
   ignore-placed-blocks: true
   # Mindestabstand zwischen zwei Alerts derselben Gruppe pro Spieler (Sekunden)
   alert-cooldown-seconds: 60
-  # Zaehlt abgebauten Stein mit, um das Erz/Stein-Verhaeltnis im Alert anzuzeigen
-  stone-blocks: [STONE, DEEPSLATE, TUFF, GRANITE, DIORITE, ANDESITE, NETHERRACK, BASALT, BLACKSTONE, CALCITE]
-  format: "<click:run_command:'/tp %player%'><hover:show_text:'<gray>Stein abgebaut: <white>%stone%<newline><gray>Erze pro 100 Stein: <white>%ratio%<newline><gray>Ort: <white>%location%<newline><yellow>Klicken zum Teleportieren'>%prefix%<gold>XRay? <white>%player% <gray>hat <red>%count%x %group% <gray>in <white>%window% Min.</gray> abgebaut</hover></click>"
-  # Jedes Erz einzeln (normal und Tiefenschiefer getrennt), Nether-Erze, Spawner und Stein-Zaehler
+  # Gestein wird mitgezaehlt fuer das Erz-pro-Gestein-Verhaeltnis im Alert:
+  # normale Erze -> Stein, Tiefenschiefer-Erze -> Tiefenschiefer, Nether-Erze -> Netherrack
+  base-blocks:
+    stone: [STONE, GRANITE, DIORITE, ANDESITE, CALCITE, DRIPSTONE_BLOCK]
+    deepslate: [DEEPSLATE, TUFF, COBBLED_DEEPSLATE]
+    netherrack: [NETHERRACK, BASALT, BLACKSTONE, SOUL_SAND, SOUL_SOIL]
+  format: "<click:run_command:'/tp %player%'><hover:show_text:'<gray>Abgebaut: <white>%stone%</white> Stein, <white>%deepslate%</white> Tiefenschiefer, <white>%netherrack%</white> Netherrack<newline><gray>Erze pro 100 %base%: <white>%ratio%<newline><gray>Ort: <white>%location%<newline><yellow>Klicken zum Teleportieren'>%prefix%<gold>XRay? <white>%player% <gray>hat <red>%count%x %group% <gray>in <white>%window% Min.</gray> abgebaut</hover></click>"
+  # Jedes Erz einzeln (normal und Tiefenschiefer getrennt), Nether-Erze und Spawner
   groups:
     coal:
       display: "Kohleerz"
@@ -526,27 +530,6 @@ xray:
       enabled: true
       max-blocks: 3
       window-minutes: 30
-    stone:
-      display: "Stein"
-      icon: STONE
-      materials: [STONE]
-      enabled: true
-      max-blocks: 2000
-      window-minutes: 10
-    deepslate:
-      display: "Tiefenschiefer"
-      icon: DEEPSLATE
-      materials: [DEEPSLATE]
-      enabled: true
-      max-blocks: 2000
-      window-minutes: 10
-    netherrack:
-      display: "Netherrack"
-      icon: NETHERRACK
-      materials: [NETHERRACK]
-      enabled: true
-      max-blocks: 3000
-      window-minutes: 10
 
 # ─────────────────────────────────────────────────────────────
 #  Mod-/Hack-Client-Erkennung

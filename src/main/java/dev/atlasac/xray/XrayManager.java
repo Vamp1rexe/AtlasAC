@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -34,9 +35,12 @@ public final class XrayManager implements Listener {
 	private final AtlasAC plugin;
 	private final Map<String, OreGroup> groups = new LinkedHashMap<>();
 	private final Map<Material, OreGroup> byMaterial = new HashMap<>();
-	private final Set<Material> stone = new HashSet<>();
+	/** Grundgestein -> Kategorie (stone, deepslate, netherrack) fuer das Erz-pro-Gestein-Verhaeltnis. */
+	private final Map<Material, String> baseOf = new HashMap<>();
+	public static final List<String> BASES = List.of("stone", "deepslate", "netherrack");
+	private static final Map<String, String> BASE_NAMES = Map.of("stone", "Stein", "deepslate", "Tiefenschiefer", "netherrack", "Netherrack");
 	private final Map<UUID, Map<String, ArrayDeque<Long>>> mined = new HashMap<>();
-	private final Map<UUID, ArrayDeque<Long>> stoneMined = new HashMap<>();
+	private final Map<UUID, Map<String, ArrayDeque<Long>>> baseMined = new HashMap<>();
 	private final Map<UUID, Map<String, Long>> lastAlert = new HashMap<>();
 	private final Set<String> placed = Collections.newSetFromMap(new LinkedHashMap<>() {
 		@Override
@@ -56,7 +60,7 @@ public final class XrayManager implements Listener {
 		ConfigurationSection x = plugin.getConfig().getConfigurationSection("xray");
 		groups.clear();
 		byMaterial.clear();
-		stone.clear();
+		baseOf.clear();
 		if (x == null) {
 			enabled = false;
 			return;
@@ -64,9 +68,13 @@ public final class XrayManager implements Listener {
 		enabled = x.getBoolean("enabled", true);
 		ignorePlaced = x.getBoolean("ignore-placed-blocks", true);
 		cooldownMs = x.getLong("alert-cooldown-seconds", 60) * 1000L;
-		for (String s : x.getStringList("stone-blocks")) {
-			Material m = Material.matchMaterial(s);
-			if (m != null) stone.add(m);
+		ConfigurationSection bases = x.getConfigurationSection("base-blocks");
+		for (String base : BASES) {
+			List<String> list = bases != null ? bases.getStringList(base) : List.of();
+			for (String s : list) {
+				Material m = Material.matchMaterial(s);
+				if (m != null) baseOf.put(m, base);
+			}
 		}
 		ConfigurationSection gs = x.getConfigurationSection("groups");
 		if (gs == null) return;
@@ -121,9 +129,13 @@ public final class XrayManager implements Listener {
 		Material type = b.getType();
 		long now = System.currentTimeMillis();
 
-		if (stone.contains(type)) {
-			stoneMined.computeIfAbsent(p.getUniqueId(), k -> new ArrayDeque<>()).addLast(now);
-			trim(stoneMined.get(p.getUniqueId()), now, 60);
+		String base = baseOf.get(type);
+		if (base != null) {
+			ArrayDeque<Long> q = baseMined.computeIfAbsent(p.getUniqueId(), k -> new HashMap<>())
+					.computeIfAbsent(base, k -> new ArrayDeque<>());
+			q.addLast(now);
+			trim(q, now, 60);
+			return;
 		}
 		OreGroup g = byMaterial.get(type);
 		if (g == null || !g.enabled) return;
@@ -144,17 +156,42 @@ public final class XrayManager implements Listener {
 		}
 	}
 
+	/** Zu welchem Gestein gehoert ein Erz? Tiefenschiefer-Erze -> Tiefenschiefer, Nether-Erze -> Netherrack. */
+	private static String baseFor(OreGroup g) {
+		String key = g.materials.iterator().next().getKey().getKey();
+		if (key.contains("deepslate")) return "deepslate";
+		if (key.contains("nether") || key.contains("ancient_debris") || key.contains("gilded") || key.contains("quartz")) return "netherrack";
+		return "stone";
+	}
+
+	private int baseCount(UUID player, String base, int minutes) {
+		Map<String, ArrayDeque<Long>> m = baseMined.get(player);
+		ArrayDeque<Long> q = m == null ? null : m.get(base);
+		if (q == null) return 0;
+		trim(q, System.currentTimeMillis(), minutes);
+		return q.size();
+	}
+
 	private void alert(Player p, OreGroup g, int count, Location loc) {
-		ArrayDeque<Long> st = stoneMined.get(p.getUniqueId());
-		if (st != null) trim(st, System.currentTimeMillis(), g.windowMinutes);
-		int stoneCount = st == null ? 0 : st.size();
-		String ratio = stoneCount == 0 ? "∞" : Text.fmt1(count * 100.0 / stoneCount);
+		String base = baseFor(g);
+		int stoneCount = baseCount(p.getUniqueId(), "stone", g.windowMinutes);
+		int deepCount = baseCount(p.getUniqueId(), "deepslate", g.windowMinutes);
+		int netherCount = baseCount(p.getUniqueId(), "netherrack", g.windowMinutes);
+		int relevant = switch (base) {
+			case "deepslate" -> deepCount;
+			case "netherrack" -> netherCount;
+			default -> stoneCount;
+		};
+		String ratio = relevant == 0 ? "∞" : Text.fmt1(count * 100.0 / relevant);
 		String msg = Text.apply(plugin.getConfig().getString("xray.format", "%prefix%XRay? %player% %count%x %group%"), Map.of(
 				"%player%", p.getName(),
 				"%count%", String.valueOf(count),
 				"%group%", Text.escape(g.display),
 				"%window%", String.valueOf(g.windowMinutes),
 				"%stone%", String.valueOf(stoneCount),
+				"%deepslate%", String.valueOf(deepCount),
+				"%netherrack%", String.valueOf(netherCount),
+				"%base%", BASE_NAMES.get(base),
 				"%ratio%", ratio,
 				"%location%", loc.getWorld().getName() + " " + loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ()));
 		plugin.alerts().send(msg);
@@ -175,14 +212,13 @@ public final class XrayManager implements Listener {
 			if (t != null) trim(t, now, g.windowMinutes);
 			out.put(g.id, t == null ? 0 : t.size());
 		}
-		ArrayDeque<Long> st = stoneMined.get(player);
-		out.put("__stone", st == null ? 0 : st.size());
+		for (String base : BASES) out.put("__" + base, baseCount(player, base, 60));
 		return out;
 	}
 
 	public void reset(UUID player) {
 		mined.remove(player);
-		stoneMined.remove(player);
+		baseMined.remove(player);
 		lastAlert.remove(player);
 	}
 

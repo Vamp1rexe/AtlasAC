@@ -39,7 +39,7 @@ Paper-Plugin (26.3) mit Grim-artiger Packet-Analyse, starken PvP-Checks, Anti-XR
 
 **Discord-Webhook** – meldet jeden Ban/IP-Ban mit Spieler, Grund, Dauer, Ablaufdatum, Fall-ID und Kopf (`discord.webhook-url`).
 
-**Anti-XRay** – jedes Erz einzeln (normal und Tiefenschiefer getrennt), Roherz-Blöcke aus Erzadern, alle Nether-Erze, Spawner sowie Zähler für Stein, Tiefenschiefer und Netherrack. Alert, wenn in einem Zeitfenster zu viele Erze einer Gruppe abgebaut werden (inkl. Erz/Stein-Verhältnis). Einstellbar per GUI (`/atlas xray`) oder `config.yml`.
+**Anti-XRay** – jedes Erz einzeln (normal und Tiefenschiefer getrennt), Roherz-Blöcke aus Erzadern, alle Nether-Erze, Spawner ; im Alert das Verhältnis Erz pro 100 Gestein (Stein, Tiefenschiefer oder Netherrack, je nach Erz). Alert, wenn in einem Zeitfenster zu viele Erze einer Gruppe abgebaut werden (inkl. Erz/Stein-Verhältnis). Einstellbar per GUI (`/atlas xray`) oder `config.yml`.
 
 **Anti-Dupe** – jedes nicht stapelbare Item bekommt eine versteckte ID. Gleiche ID an zwei Orten gleichzeitig → Kopie wird gelöscht, Alert ans Team, Spieler wird geflaggt (Standard: Kick).
 
