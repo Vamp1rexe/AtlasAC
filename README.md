@@ -35,7 +35,7 @@ Paper-Plugin (26.3) mit Grim-artiger Packet-Analyse, starken PvP-Checks, Anti-XR
 - Silent-Aura-Snap (großer Yaw-Sprung aus dem Stillstand direkt vor dem Schlag)
 - Ping-Spoofing: Lag-Compensation auf 300 ms gedeckelt
 
-**Mod-Erkennung** – Client-Brand und Mod-Channels werden unscharf mit einer Liste verglichen (`autototem` erkennt auch `AuToTootem_x30975`), dazu eine Translation-Key-Probe per unsichtbarem Schild. Meteor, Wurst, Baritone, LiquidBounce und weitere Hack-Clients: 30 Tage Ban; Freecam, XRay, AutoTotem, ESP: 7 Tage. Strafe pro Mod frei einstellbar (`mod-detection.mods`), eigene Namen einfach ergänzen, testen mit `/atlas mods test <Name>`.
+**Mod-Erkennung** – Client-Brand und Mod-Channels werden unscharf mit einer Liste verglichen (`autototem` erkennt auch `AuToTootem_x30975`), dazu eine Translation-Key-Probe per unsichtbarem Schild. Meteor, Wurst, Baritone, LiquidBounce und weitere Hack-Clients: 30 Tage Ban; Freecam, XRay, AutoTotem, ESP: 7 Tage. Anti-Detection-Mods (keine Antwort auf die Probe): erst Kick mit Aufforderung, den Mod zu entfernen, beim nächsten Mal 30 Tage Ban. Strafe pro Mod frei einstellbar (`mod-detection.mods`), eigene Namen einfach ergänzen, testen mit `/atlas mods test <Name>`.
 
 **Anti-XRay** – Alert, wenn in einem Zeitfenster zu viele Erze einer Gruppe abgebaut werden (inkl. Erz/Stein-Verhältnis). Einstellbar per GUI (`/atlas xray`) oder `config.yml`.
 

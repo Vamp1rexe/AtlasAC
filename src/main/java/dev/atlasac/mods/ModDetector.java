@@ -58,6 +58,7 @@ public final class ModDetector implements Listener {
 	private final Map<UUID, Probe> probes = new ConcurrentHashMap<>();
 	private final Map<UUID, Set<String>> channels = new ConcurrentHashMap<>();
 	private final Set<UUID> punished = ConcurrentHashMap.newKeySet();
+	private final Set<UUID> warned = ConcurrentHashMap.newKeySet();
 
 	public ModDetector(AtlasAC plugin) {
 		this.plugin = plugin;
@@ -66,6 +67,7 @@ public final class ModDetector implements Listener {
 	// ───────────────────────── Config ─────────────────────────
 
 	public void reload() {
+		loadWarned();
 		rules.clear();
 		ConfigurationSection mods = plugin.getConfig().getConfigurationSection("mod-detection.mods");
 		if (mods == null) return;
@@ -262,10 +264,7 @@ public final class ModDetector implements Listener {
 			Probe pr = probes.remove(p.getUniqueId());
 			if (pr == null || !p.isOnline()) return;
 			restore(p, pr.location());
-			if (plugin.getConfig().getBoolean("mod-detection.translation-probe.timeout-alert", true)) {
-				plugin.alerts().send("%prefix%<gold>Mods? <white>" + p.getName()
-						+ " <gray>hat nicht auf die Mod-Pruefung geantwortet <dark_gray>(Anti-Detection-Mod moeglich)");
-			}
+			antiDetection(p);
 		}, timeout);
 	}
 
@@ -288,11 +287,12 @@ public final class ModDetector implements Listener {
 		Bukkit.getScheduler().runTask(plugin, () -> {
 			if (!p.isOnline()) return;
 			restore(p, l);
-			evaluate(p, probe.keys(), lines);
+			if (!evaluate(p, probe.keys(), lines)) clearWarning(p);
 		});
 	}
 
-	private void evaluate(Player p, List<String> keys, List<Component> lines) {
+	/** @return true, wenn ein Mod erkannt wurde */
+	private boolean evaluate(Player p, List<String> keys, List<Component> lines) {
 		for (int line = 0; line < 4; line++) {
 			int from = line * KEYS_PER_LINE;
 			if (from >= keys.size()) break;
@@ -306,10 +306,83 @@ public final class ModDetector implements Listener {
 				for (ModRule r : rules.values()) {
 					if (r.keys().contains(key)) {
 						detected(p, r, "Translation-Key \"" + key + "\" -> \"" + part + "\"");
-						return;
+						return true;
 					}
 				}
 			}
+		}
+		return false;
+	}
+
+	// ───────────────────────── Anti-Detection ─────────────────────────
+
+	private java.io.File warnedFile() {
+		return new java.io.File(plugin.getDataFolder(), "antidetect-warnings.yml");
+	}
+
+	private void loadWarned() {
+		warned.clear();
+		var y = org.bukkit.configuration.file.YamlConfiguration.loadConfiguration(warnedFile());
+		for (String s : y.getStringList("warned")) {
+			try {
+				warned.add(UUID.fromString(s));
+			} catch (IllegalArgumentException ignored) {
+			}
+		}
+	}
+
+	private void saveWarned() {
+		var y = new org.bukkit.configuration.file.YamlConfiguration();
+		List<String> list = new ArrayList<>();
+		for (UUID id : warned) list.add(id.toString());
+		y.set("warned", list);
+		try {
+			y.save(warnedFile());
+		} catch (java.io.IOException ex) {
+			plugin.getLogger().warning("antidetect-warnings.yml: " + ex.getMessage());
+		}
+	}
+
+	/** Bedrock-Spieler (Geyser/Floodgate) koennen die Probe nicht beantworten. */
+	private static boolean bedrock(Player p) {
+		String brand = p.getClientBrandName();
+		if (brand != null && (brand.toLowerCase(Locale.ROOT).contains("geyser") || brand.toLowerCase(Locale.ROOT).contains("floodgate"))) return true;
+		return p.getUniqueId().getMostSignificantBits() == 0L;
+	}
+
+	/**
+	 * Keine Antwort auf die Probe = Anti-Detection-Mod (z.B. ExploitPreventer, OpSec).
+	 * Erstes Mal: Kick mit Aufforderung, den Mod zu entfernen. Wiederholt: Ban (Standard 30 Tage).
+	 */
+	private void antiDetection(Player p) {
+		ConfigurationSection c = plugin.getConfig().getConfigurationSection("mod-detection.anti-detection");
+		String action = c == null ? "kick-then-ban" : c.getString("action", "kick-then-ban").toLowerCase(Locale.ROOT);
+		plugin.alerts().send("%prefix%<gold>Anti-Detection? <white>" + p.getName()
+				+ " <gray>hat nicht auf die Mod-Pruefung geantwortet" + (warned.contains(p.getUniqueId()) ? " <red>(bereits verwarnt)" : ""));
+		if (action.equals("alert") || bedrock(p) || p.hasPermission(AtlasAC.PERM_BYPASS)) return;
+
+		PunishmentManager pm = plugin.punishments();
+		if (warned.contains(p.getUniqueId()) || action.equals("ban")) {
+			long duration = Durations.parse(c == null ? "30d" : c.getString("ban-duration", "30d"));
+			if (duration == 0) duration = 30L * 86_400_000L;
+			warned.remove(p.getUniqueId());
+			saveWarned();
+			pm.ban(new PunishmentManager.Target(p.getUniqueId(), p.getName(), PunishmentManager.ipOf(p)),
+					c == null ? "Anti-Detection-Mod nach Verwarnung" : c.getString("ban-reason", "Anti-Detection-Mod nach Verwarnung"),
+					PunishmentManager.STAFF_ATLAS, duration);
+			return;
+		}
+		warned.add(p.getUniqueId());
+		saveWarned();
+		pm.kick(p, c == null ? "Anti-Detection-Mod erkannt" : c.getString("kick-reason", "Anti-Detection-Mod erkannt"),
+				PunishmentManager.STAFF_ATLAS, false);
+	}
+
+	/** Spieler hat die Probe sauber beantwortet -> Verwarnung loeschen. */
+	private void clearWarning(Player p) {
+		if (warned.remove(p.getUniqueId())) {
+			saveWarned();
+			plugin.alerts().send("%prefix%<green>" + p.getName() + " <gray>hat den Anti-Detection-Mod entfernt.");
 		}
 	}
 

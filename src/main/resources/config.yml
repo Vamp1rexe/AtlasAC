@@ -408,8 +408,14 @@ mod-detection:
     # Oeffnet fuer einen Tick ein unsichtbares Schild und liest die aufgeloesten Mod-Keys zurueck
     enabled: true
     timeout-seconds: 10
-    # Keine Antwort = vermutlich Anti-Detection-Mod -> Alert ans Team (keine Strafe)
-    timeout-alert: true
+  # Keine Antwort auf die Probe = Anti-Detection-Mod (ExploitPreventer, OpSec ...)
+  # action: kick-then-ban (erst Kick mit Hinweis, beim naechsten Mal Ban) | ban | alert
+  # Bedrock-Spieler (Geyser/Floodgate) sind ausgenommen.
+  anti-detection:
+    action: kick-then-ban
+    kick-reason: "Anti-Detection-Mod erkannt! Entferne den Mod – beim naechsten Join damit wirst du 30 Tage gebannt."
+    ban-duration: 30d
+    ban-reason: "Anti-Detection-Mod trotz Verwarnung"
   mods:
     meteor:
       display: "Meteor Client"
