@@ -271,11 +271,11 @@ public final class AdminGui {
 		for (Map<?, ?> preset : presets) {
 			if (slot % 9 == 8) slot += 2;
 			if (slot >= 44) break;
-			String name = String.valueOf(preset.getOrDefault("name", "Strafe"));
-			String type = String.valueOf(preset.getOrDefault("type", "ban")).toLowerCase();
-			String duration = String.valueOf(preset.getOrDefault("duration", "permanent"));
-			String reason = String.valueOf(preset.getOrDefault("reason", "Regelverstoss"));
-			Material icon = Material.matchMaterial(String.valueOf(preset.getOrDefault("icon", "PAPER")));
+			String name = str(preset, "name", "Strafe");
+			String type = str(preset, "type", "ban").toLowerCase();
+			String duration = str(preset, "duration", "permanent");
+			String reason = str(preset, "reason", "Regelverstoss");
+			Material icon = Material.matchMaterial(str(preset, "icon", "PAPER"));
 			if (icon == null || !icon.isItem()) icon = Material.PAPER;
 			long ms = type.equals("kick") ? 0 : Durations.parse(duration);
 			if (!type.equals("kick") && ms == 0) {
@@ -293,6 +293,11 @@ public final class AdminGui {
 		}
 		m.set(49, Menu.item(Material.ARROW, "<yellow>« Zurueck"), e -> openPlayer(viewer, id));
 		m.fill(Material.BLACK_STAINED_GLASS_PANE).open(viewer);
+	}
+
+	private static String str(Map<?, ?> map, String key, String def) {
+		Object v = map.get(key);
+		return v == null ? def : String.valueOf(v);
 	}
 
 	private void apply(Player viewer, Player t, String type, long duration, String reason) {
