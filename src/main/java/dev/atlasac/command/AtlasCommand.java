@@ -85,6 +85,7 @@ public final class AtlasCommand implements BasicCommand {
 			case "xray" -> xray(s, args);
 			case "dupe" -> dupe(s, args);
 			case "freezecmd" -> freezeCommands(s, args);
+			case "mods" -> mods(s, args);
 			case "gui" -> {
 				if (!(s instanceof Player p)) {
 					msg(s, "<red>Nur ingame.");
@@ -199,6 +200,34 @@ public final class AtlasCommand implements BasicCommand {
 		plugin.saveConfig();
 	}
 
+	/** /atlas mods check|info <Spieler> · /atlas mods test <Name> */
+	private void mods(CommandSender s, String[] args) {
+		if (!s.hasPermission(AtlasAC.PERM_ADMIN)) {
+			msg(s, "<red>Keine Rechte.");
+			return;
+		}
+		String sub = args.length > 1 ? args[1].toLowerCase() : "";
+		if (sub.equals("test") && args.length > 2) {
+			String name = String.join(" ", java.util.Arrays.copyOfRange(args, 2, args.length));
+			var r = plugin.mods().match(name);
+			msg(s, r == null ? "<green>\"" + Text.escape(name) + "\" trifft keine Regel."
+					: "<red>\"" + Text.escape(name) + "\" -> " + Text.escape(r.display()) + " <gray>(" + r.action()
+					+ (r.action().contains("ban") ? " " + dev.atlasac.util.Durations.format(r.duration()) : "") + ")");
+			return;
+		}
+		Player t = args.length > 2 ? Bukkit.getPlayerExact(args[2]) : null;
+		if (t == null || !(sub.equals("check") || sub.equals("info"))) {
+			msg(s, "<gray>/atlas mods <white>check <Spieler> <gray>| <white>info <Spieler> <gray>| <white>test <Name>");
+			return;
+		}
+		if (sub.equals("info")) {
+			msg(s, "<white>" + t.getName() + "<gray>: " + Text.escape(plugin.mods().describe(t)));
+		} else {
+			plugin.mods().recheck(t);
+			msg(s, "<gray>Mod-Pruefung fuer <white>" + t.getName() + " <gray>gestartet.");
+		}
+	}
+
 	private void help(CommandSender s) {
 		msg(s, "<white>Atlas AntiCheat <gray>v" + plugin.getPluginMeta().getVersion() + " <dark_gray>| <gray>Speicher: <white>" + plugin.punishments().storageName());
 		for (String line : List.of(
@@ -213,6 +242,7 @@ public final class AtlasCommand implements BasicCommand {
 				"/staff <gray>– Staff-Modus (Vanish + Werkzeuge) · <aqua>/staff vanish",
 				"/atlas freeze <Spieler> <gray>– Einfrieren / Auftauen",
 				"/atlas freezecmd add|remove|list <gray>– Erlaubte Befehle im Freeze",
+				"/atlas mods check|info <Spieler> <gray>· <aqua>/atlas mods test <Name>",
 				"/atlas kick <Spieler> [Grund]",
 				"/atlas ban <Spieler> [Dauer] [Grund]",
 				"/atlas tempban <Spieler> <Dauer> [Grund]",
@@ -230,13 +260,14 @@ public final class AtlasCommand implements BasicCommand {
 	public Collection<String> suggest(CommandSourceStack source, String[] args) {
 		List<String> out = new ArrayList<>();
 		if (args.length <= 1) {
-			out.addAll(List.of("alerts", "vl", "xray", "dupe", "reload", "freezecmd", "gui"));
+			out.addAll(List.of("alerts", "vl", "xray", "dupe", "reload", "freezecmd", "gui", "mods"));
 			out.addAll(PunishCommands.SUBS);
 		} else if (args.length == 2) {
 			switch (args[0].toLowerCase()) {
 				case "xray" -> out.addAll(List.of("gui", "stats", "reset"));
 				case "dupe" -> out.addAll(List.of("scan", "check"));
 				case "freezecmd" -> out.addAll(List.of("add", "remove", "list"));
+				case "mods" -> out.addAll(List.of("check", "info", "test"));
 				case "vl", "violations", "gui" -> Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
 				default -> {
 					if (PunishCommands.SUBS.contains(args[0].toLowerCase())) Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
@@ -244,6 +275,8 @@ public final class AtlasCommand implements BasicCommand {
 			}
 		} else if (args.length == 3 && args[0].equalsIgnoreCase("freezecmd") && args[1].equalsIgnoreCase("remove")) {
 			out.addAll(plugin.getConfig().getStringList("freeze.allowed-commands"));
+		} else if (args.length == 3 && args[0].equalsIgnoreCase("mods") && !args[1].equalsIgnoreCase("test")) {
+			Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
 		} else if (args.length == 3 && args[0].equalsIgnoreCase("xray")) {
 			Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
 		} else if (args.length == 3 && Set.of("tempban", "tempipban", "tempmute", "ban", "ipban", "mute").contains(args[0].toLowerCase())) {

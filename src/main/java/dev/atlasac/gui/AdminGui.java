@@ -155,6 +155,15 @@ public final class AdminGui {
 		m.set(24, Menu.item(Material.BOOK, "<white><bold>Historie", "<gray>Alle Strafen ansehen"), e -> openHistory(viewer, id));
 		m.set(25, Menu.item(Material.IRON_AXE, "<red><bold>Bestrafen", "<gray>Kick, Mute, Ban, IP-Ban"), e -> openPunish(viewer, id));
 
+		m.set(31, Menu.item(Material.SPYGLASS, "<gold><bold>Mods pruefen", "<gray>Brand, Channels und", "<gray>Translation-Probe erneut", "<gray>ausfuehren"), e -> {
+			if (!viewer.hasPermission(AtlasAC.PERM_ADMIN)) {
+				msg(viewer, "<red>Keine Rechte (" + AtlasAC.PERM_ADMIN + ")");
+				return;
+			}
+			viewer.closeInventory();
+			msg(viewer, "<gray>" + Text.escape(plugin.mods().describe(t)));
+			plugin.mods().recheck(t);
+		});
 		m.set(40, Menu.item(Material.ARROW, "<yellow>« Zurueck"), e -> openList(viewer, 0));
 		m.fill(Material.BLACK_STAINED_GLASS_PANE).open(viewer);
 	}

@@ -13,6 +13,7 @@ import dev.atlasac.data.PlayerData;
 import dev.atlasac.dupe.DupeManager;
 import dev.atlasac.packet.AtlasPacketListener;
 import dev.atlasac.punish.FreezeManager;
+import dev.atlasac.mods.ModDetector;
 import dev.atlasac.command.StaffCommand;
 import dev.atlasac.gui.AdminGui;
 import dev.atlasac.gui.MenuListener;
@@ -47,6 +48,7 @@ public final class AtlasAC extends JavaPlugin {
 	private FreezeManager freeze;
 	private StaffModeManager staffMode;
 	private AdminGui adminGui;
+	private ModDetector mods;
 	private PacketListenerCommon packetListener;
 	private static AtlasAC instance;
 
@@ -87,6 +89,8 @@ public final class AtlasAC extends JavaPlugin {
 		freeze = new FreezeManager(this);
 		staffMode = new StaffModeManager(this);
 		adminGui = new AdminGui(this);
+		mods = new ModDetector(this);
+		mods.reload();
 
 		var pm = getServer().getPluginManager();
 		pm.registerEvents(new AtlasListener(this), this);
@@ -96,6 +100,7 @@ public final class AtlasAC extends JavaPlugin {
 		pm.registerEvents(punishments, this);
 		pm.registerEvents(freeze, this);
 		pm.registerEvents(staffMode, this);
+		pm.registerEvents(mods, this);
 		pm.registerEvents(new MenuListener(), this);
 
 		packetListener = PacketEvents.getAPI().getEventManager().registerListener(new AtlasPacketListener(this));
@@ -146,6 +151,7 @@ public final class AtlasAC extends JavaPlugin {
 		checks.reload();
 		xray.reload();
 		dupe.reload();
+		mods.reload();
 		scheduleDupeScan();
 	}
 
@@ -197,5 +203,9 @@ public final class AtlasAC extends JavaPlugin {
 
 	public AdminGui adminGui() {
 		return adminGui;
+	}
+
+	public ModDetector mods() {
+		return mods;
 	}
 }

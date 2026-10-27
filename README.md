@@ -35,6 +35,8 @@ Paper-Plugin (26.3) mit Grim-artiger Packet-Analyse, starken PvP-Checks, Anti-XR
 - Silent-Aura-Snap (großer Yaw-Sprung aus dem Stillstand direkt vor dem Schlag)
 - Ping-Spoofing: Lag-Compensation auf 300 ms gedeckelt
 
+**Mod-Erkennung** – Client-Brand und Mod-Channels werden unscharf mit einer Liste verglichen (`autototem` erkennt auch `AuToTootem_x30975`), dazu eine Translation-Key-Probe per unsichtbarem Schild. Meteor, Wurst, Baritone, LiquidBounce und weitere Hack-Clients: 30 Tage Ban; Freecam, XRay, AutoTotem, ESP: 7 Tage. Strafe pro Mod frei einstellbar (`mod-detection.mods`), eigene Namen einfach ergänzen, testen mit `/atlas mods test <Name>`.
+
 **Anti-XRay** – Alert, wenn in einem Zeitfenster zu viele Erze einer Gruppe abgebaut werden (inkl. Erz/Stein-Verhältnis). Einstellbar per GUI (`/atlas xray`) oder `config.yml`.
 
 **Anti-Dupe** – jedes nicht stapelbare Item bekommt eine versteckte ID. Gleiche ID an zwei Orten gleichzeitig → Kopie wird gelöscht, Alert ans Team, Spieler wird geflaggt (Standard: Kick).
@@ -62,6 +64,7 @@ Paper-Plugin (26.3) mit Grim-artiger Packet-Analyse, starken PvP-Checks, Anti-XR
 | `/atlas history <Spieler>` | atlasac.history |
 | `/staff` · `/staff vanish` · `/staff gui` | atlasac.staff (Vanish sehen: atlasac.vanish.see, fremde Inventare bearbeiten: atlasac.staff.invedit) |
 | `/atlas gui [Spieler]` | atlasac.gui |
+| `/atlas mods check\|info <Spieler>` · `/atlas mods test <Name>` | atlasac.admin |
 | `/atlas freezecmd add\|remove\|list <Befehl>` | atlasac.admin |
 
 Dauer-Format: `30m`, `12h`, `7d`, `2w`, `1mo`, `1y`, kombinierbar (`1d12h`) oder `permanent`.
