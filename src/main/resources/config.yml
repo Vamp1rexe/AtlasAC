@@ -124,6 +124,8 @@ staff-mode:
   vanish-on-enter: true
   # Im Staff-Modus rot leuchten, sobald man aus dem Vanish geht
   glow-when-visible: true
+  # false = nach /staff kann man in Survival/Adventure nicht mehr fliegen (auch wenn vorher /fly an war)
+  keep-flight-after-exit: false
 
 # Schnell-Strafen im Admin-GUI (/atlas gui -> Spieler -> Bestrafen)
 # type: kick | mute | ban | ipban   duration: z.B. 30m, 1d, 7d, 30d, permanent

@@ -193,8 +193,7 @@ public final class StaffModeManager implements Listener {
 		} catch (IllegalArgumentException ignored) {
 			p.setGameMode(GameMode.SURVIVAL);
 		}
-		p.setAllowFlight(y.getBoolean("allow-flight", false));
-		p.setFlying(p.getAllowFlight() && y.getBoolean("flying", false));
+		applyFlight(p, y.getBoolean("allow-flight", false), y.getBoolean("flying", false));
 		p.setInvulnerable(y.getBoolean("invulnerable", false));
 		p.setFoodLevel(y.getInt("food", 20));
 		p.setSaturation((float) y.getDouble("saturation", 5));
@@ -206,6 +205,29 @@ public final class StaffModeManager implements Listener {
 		Location loc = y.getLocation("location");
 		if (teleportBack && loc != null && loc.getWorld() != null) p.teleport(loc);
 		if (!f.delete()) plugin.getLogger().warning("staffmode/" + f.getName() + " konnte nicht geloescht werden.");
+		// Nach dem Teleport (Weltwechsel, andere Plugins) Flugrechte nochmal hart setzen
+		boolean allow = y.getBoolean("allow-flight", false), flying = y.getBoolean("flying", false);
+		Bukkit.getScheduler().runTaskLater(plugin, () -> {
+			if (p.isOnline() && !inStaffMode(p)) applyFlight(p, allow, flying);
+		}, 2L);
+	}
+
+	/**
+	 * Flug nach dem Staff-Modus: in Survival/Adventure standardmaessig immer aus
+	 * (staff-mode.keep-flight-after-exit: true behaelt eine vorher erlaubte Flugfaehigkeit).
+	 */
+	private void applyFlight(Player p, boolean savedAllow, boolean savedFlying) {
+		GameMode gm = p.getGameMode();
+		if (gm == GameMode.CREATIVE || gm == GameMode.SPECTATOR) return;
+		boolean keep = plugin.getConfig().getBoolean("staff-mode.keep-flight-after-exit", false) && savedAllow;
+		if (!keep) {
+			p.setFlying(false);
+			p.setAllowFlight(false);
+			p.setFallDistance(0);
+		} else {
+			p.setAllowFlight(true);
+			p.setFlying(savedFlying);
+		}
 	}
 
 	// ───────────────────────── Vanish ─────────────────────────
