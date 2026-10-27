@@ -1,0 +1,7 @@
+name: AtlasModCheck
+version: '${version}'
+main: dev.atlasmodcheck.AtlasModCheck
+api-version: '26.3'
+description: Atlas ModCheck – erkennt Hack-Clients und verbotene Mods (Brand, Channels, Translation-Probe).
+authors:
+  - Robert

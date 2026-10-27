@@ -1,0 +1,180 @@
+# ─────────────────────────────────────────────────────────────
+#  Atlas ModCheck – Client- und Mod-Erkennung
+#  Texte in MiniMessage (https://docs.advntr.dev/minimessage/format.html)
+# ─────────────────────────────────────────────────────────────
+
+prefix: "<dark_gray>[<gradient:#7b5cff:#00d4ff><bold>Atlas</bold></gradient><dark_gray>] "
+
+# Kicks (punishment: kick) zaehlen hoch – der x-te Kick im Zeitfenster wird ein Ban
+escalation:
+  enabled: true
+  kicks: 3
+  within: 24h
+  duration: 7d
+  reason: "Wiederholt verbotene Mods"
+
+# Oeffentlich fuer alle, nur bei Bans (leer = aus). Platzhalter: %player% %duration%
+public-ban-broadcast: "<dark_gray>[<gradient:#7b5cff:#00d4ff><bold>Atlas</bold></gradient><dark_gray>] <dark_red><bold>✖</bold> <white>%player% <dark_gray>» <gradient:#ff4d4d:#b30000><bold>Banned by Atlas ModCheck</bold></gradient> <dark_gray>| <gray>%duration%"
+
+# Platzhalter: %reason% %duration% %expires% %id%
+screens:
+  kick: |-
+    <gradient:#7b5cff:#00d4ff><bold>ATLAS MODCHECK</bold></gradient>
+    <dark_gray>━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    <red><bold>Kicked by Atlas ModCheck</bold>
+
+    <gray>Grund: <white>%reason%
+
+    <dark_gray>Entferne verbotene Mods und joine erneut.
+  ban: |-
+    <gradient:#7b5cff:#00d4ff><bold>ATLAS MODCHECK</bold></gradient>
+    <dark_gray>━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    <dark_red><bold>Banned by Atlas ModCheck</bold>
+
+    <gray>Grund: <white>%reason%
+    <gray>Dauer: <white>%duration%
+    <gray>Endet: <white>%expires%
+    <gray>Fall-ID: <white>#%id%
+
+    <dark_gray>Fehler? Melde dich mit deiner Fall-ID beim Team.
+
+# ─────────────────────────────────────────────────────────────
+#  Mod-/Hack-Client-Erkennung
+#  names            – werden unscharf mit Client-Brand und Mod-Channels verglichen
+#                     (Gross/Klein, Zahlen/Leetspeak und Sonderzeichen egal, kleine Tippfehler erlaubt):
+#                     "autototem" erkennt auch "AuToTootem_x30975"
+#  max-distance     – optional: erlaubte Tippfehler (Standard: 0 bei <=4 Zeichen, 1 bei <=8, sonst 2)
+#  translation-keys – Uebersetzungs-Keys des Mods fuer die Schild-Probe (exakt)
+#  punishment       – ban | ipban | kick | alert     duration: z.B. 7d, 30d, permanent (nur bei ban/ipban)
+#                     kick zaehlt zur Eskalation: der 3. Kick in 24h wird ein Ban (siehe escalation)
+#  Freecam ist erlaubt und deshalb nicht in der Liste.
+#  Eigene Eintraege einfach unter mods: hinzufuegen. Test: /modcheck test <Name>
+# ─────────────────────────────────────────────────────────────
+mod-detection:
+  enabled: true
+  # Wartezeit nach dem Join, bevor geprueft wird (Ticks)
+  delay-ticks: 60
+  translation-probe:
+    # Oeffnet fuer einen Tick ein unsichtbares Schild und liest die aufgeloesten Mod-Keys zurueck
+    enabled: true
+    timeout-seconds: 10
+  # Keine Antwort auf die Probe = Anti-Detection-Mod (ExploitPreventer, OpSec ...)
+  # action: kick-then-ban (erst Kick mit Hinweis, beim naechsten Mal Ban) | ban | alert
+  # Bedrock-Spieler (Geyser/Floodgate) sind ausgenommen.
+  anti-detection:
+    action: kick-then-ban
+    kick-reason: "Anti-Detection-Mod erkannt! Entferne den Mod – beim naechsten Join damit wirst du 30 Tage gebannt."
+    ban-duration: 30d
+    ban-reason: "Anti-Detection-Mod trotz Verwarnung"
+  mods:
+    meteor:
+      display: "Meteor Client"
+      names: [meteor-client, meteorclient]
+      translation-keys: [key.meteor-client.open-gui]
+      punishment: ban
+      duration: 30d
+      reason: "Hack-Client/Mod (Meteor Client)"
+    wurst:
+      display: "Wurst"
+      names: [wurst, wurstclient]
+      translation-keys: [description.wurst.hack.killaura, description.wurst.hack.xray]
+      punishment: ban
+      duration: 30d
+      reason: "Hack-Client/Mod (Wurst)"
+      max-distance: 0
+    baritone:
+      display: "Baritone"
+      names: [baritone]
+      translation-keys: []
+      punishment: ban
+      duration: 30d
+      reason: "Hack-Client/Mod (Baritone)"
+    liquidbounce:
+      display: "LiquidBounce"
+      names: [liquidbounce]
+      translation-keys: []
+      punishment: ban
+      duration: 30d
+      reason: "Hack-Client/Mod (LiquidBounce)"
+    aristois:
+      display: "Aristois"
+      names: [aristois]
+      translation-keys: []
+      punishment: ban
+      duration: 30d
+      reason: "Hack-Client/Mod (Aristois)"
+    impact:
+      display: "Impact"
+      names: [impactclient]
+      translation-keys: []
+      punishment: ban
+      duration: 30d
+      reason: "Hack-Client/Mod (Impact)"
+    rusherhack:
+      display: "RusherHack"
+      names: [rusherhack]
+      translation-keys: []
+      punishment: ban
+      duration: 30d
+      reason: "Hack-Client/Mod (RusherHack)"
+    future:
+      display: "Future Client"
+      names: [futureclient]
+      translation-keys: []
+      punishment: ban
+      duration: 30d
+      reason: "Hack-Client/Mod (Future Client)"
+    thunderhack:
+      display: "ThunderHack"
+      names: [thunderhack]
+      translation-keys: []
+      punishment: ban
+      duration: 30d
+      reason: "Hack-Client/Mod (ThunderHack)"
+    bleachhack:
+      display: "BleachHack"
+      names: [bleachhack]
+      translation-keys: []
+      punishment: ban
+      duration: 30d
+      reason: "Hack-Client/Mod (BleachHack)"
+    other-clients:
+      display: "Hack-Client"
+      names: [kamiblue, salhack, konasclient, phobos, earthhack, inertiaclient, lambdaclient, coffeeclient, bozeclient, sigmaclient, aresclient, hackedclient]
+      translation-keys: []
+      punishment: ban
+      duration: 30d
+      reason: "Hack-Client/Mod (Hack-Client)"
+      max-distance: 0
+    xray:
+      display: "XRay-Mod"
+      names: [xray, advancedxray]
+      translation-keys: []
+      punishment: kick
+      duration: 7d
+      reason: "Hack-Client/Mod (XRay-Mod)"
+    autototem:
+      display: "AutoTotem"
+      names: [autototem]
+      translation-keys: []
+      punishment: kick
+      duration: 7d
+      reason: "Hack-Client/Mod (AutoTotem)"
+    combat-hacks:
+      display: "Kampf-Hack"
+      names: [killaura, triggerbot, autoclicker, aimbot, aimassist, crystalaura]
+      translation-keys: []
+      punishment: kick
+      duration: 30d
+      reason: "Hack-Client/Mod (Kampf-Hack)"
+    esp:
+      display: "ESP/Tracer"
+      names: [chestesp, playeresp, tracers]
+      translation-keys: []
+      punishment: kick
+      duration: 7d
+      reason: "Hack-Client/Mod (ESP/Tracer)"
+      max-distance: 0
+

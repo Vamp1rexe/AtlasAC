@@ -32,6 +32,15 @@ jobs:
         if: failure()
         run: grep -E "error:|warning:" build.log | head -20 | while read -r line; do echo "::error::$line"; done
 
+      - name: Build ModCheck
+        run: |
+          set -o pipefail
+          cd modcheck && gradle build --no-daemon 2>&1 | tee ../build-modcheck.log
+
+      - name: Compiler-Fehler ModCheck anzeigen
+        if: failure()
+        run: grep -E "error:|warning:" build-modcheck.log | head -20 | while read -r line; do echo "::error::$line"; done
+
       - uses: actions/upload-artifact@v4
         with:
           name: AtlasAC
@@ -40,7 +49,7 @@ jobs:
       - name: JAR in Branch "build" ablegen
         if: github.ref == 'refs/heads/main'
         run: |
-          mkdir -p /tmp/out && cp build/libs/*.jar /tmp/out/
+          mkdir -p /tmp/out && cp build/libs/*.jar modcheck/build/libs/*.jar /tmp/out/
           cd /tmp/out
           git init -q -b build
           git config user.name "github-actions"
@@ -52,5 +61,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: build/libs/*.jar
+          files: |
+            build/libs/*.jar
+            modcheck/build/libs/*.jar
           generate_release_notes: true
