@@ -40,7 +40,7 @@ public final class XrayGui implements Listener {
 	public void open(Player player) {
 		Holder holder = new Holder();
 		int count = plugin.xray().groups().size();
-		int size = Math.min(54, Math.max(27, ((count + 8) / 9 + 2) * 9));
+		int size = Math.min(54, Math.max(27, ((count + 8) / 9 + 1) * 9));
 		Inventory inv = Bukkit.createInventory(holder, size, Text.mm("<gradient:#7b5cff:#00d4ff><bold>Atlas</bold></gradient> <dark_gray>» <gray>Anti-XRay"));
 		holder.inventory = inv;
 		render(holder);
@@ -54,9 +54,8 @@ public final class XrayGui implements Listener {
 		ItemStack filler = item(Material.BLACK_STAINED_GLASS_PANE, Text.item(" "), List.of());
 		for (int i = 0; i < inv.getSize(); i++) inv.setItem(i, filler);
 
-		int slot = 10;
+		int slot = 0;
 		for (OreGroup g : plugin.xray().groups().values()) {
-			if (slot % 9 == 8) slot += 2;
 			if (slot >= inv.getSize() - 9) break;
 			List<Component> lore = new ArrayList<>();
 			lore.add(Text.item(g.enabled ? "<green>● Aktiv" : "<red>● Deaktiviert"));

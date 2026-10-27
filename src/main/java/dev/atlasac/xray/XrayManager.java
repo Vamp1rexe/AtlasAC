@@ -124,7 +124,6 @@ public final class XrayManager implements Listener {
 		if (stone.contains(type)) {
 			stoneMined.computeIfAbsent(p.getUniqueId(), k -> new ArrayDeque<>()).addLast(now);
 			trim(stoneMined.get(p.getUniqueId()), now, 60);
-			return;
 		}
 		OreGroup g = byMaterial.get(type);
 		if (g == null || !g.enabled) return;

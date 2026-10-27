@@ -363,34 +363,133 @@ xray:
   # Zaehlt abgebauten Stein mit, um das Erz/Stein-Verhaeltnis im Alert anzuzeigen
   stone-blocks: [STONE, DEEPSLATE, TUFF, GRANITE, DIORITE, ANDESITE, NETHERRACK, BASALT, BLACKSTONE, CALCITE]
   format: "<click:run_command:'/tp %player%'><hover:show_text:'<gray>Stein abgebaut: <white>%stone%<newline><gray>Erze pro 100 Stein: <white>%ratio%<newline><gray>Ort: <white>%location%<newline><yellow>Klicken zum Teleportieren'>%prefix%<gold>XRay? <white>%player% <gray>hat <red>%count%x %group% <gray>in <white>%window% Min.</gray> abgebaut</hover></click>"
+  # Jedes Erz einzeln (normal und Tiefenschiefer getrennt), Nether-Erze, Spawner und Stein-Zaehler
   groups:
-    diamond:
-      display: "Diamanterz"
-      icon: DIAMOND_ORE
-      materials: [DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE]
+    coal:
+      display: "Kohleerz"
+      icon: COAL_ORE
+      materials: [COAL_ORE]
       enabled: true
-      max-blocks: 12
+      max-blocks: 160
       window-minutes: 10
-    ancient-debris:
-      display: "Antiker Schrott"
-      icon: ANCIENT_DEBRIS
-      materials: [ANCIENT_DEBRIS]
+    deepslate-coal:
+      display: "Tiefenschiefer-Kohleerz"
+      icon: DEEPSLATE_COAL_ORE
+      materials: [DEEPSLATE_COAL_ORE]
       enabled: true
-      max-blocks: 8
-      window-minutes: 15
-    emerald:
-      display: "Smaragderz"
-      icon: EMERALD_ORE
-      materials: [EMERALD_ORE, DEEPSLATE_EMERALD_ORE]
+      max-blocks: 64
+      window-minutes: 10
+    copper:
+      display: "Kupfererz"
+      icon: COPPER_ORE
+      materials: [COPPER_ORE]
       enabled: true
-      max-blocks: 8
+      max-blocks: 128
+      window-minutes: 10
+    deepslate-copper:
+      display: "Tiefenschiefer-Kupfererz"
+      icon: DEEPSLATE_COPPER_ORE
+      materials: [DEEPSLATE_COPPER_ORE]
+      enabled: true
+      max-blocks: 96
+      window-minutes: 10
+    iron:
+      display: "Eisenerz"
+      icon: IRON_ORE
+      materials: [IRON_ORE]
+      enabled: true
+      max-blocks: 96
+      window-minutes: 10
+    deepslate-iron:
+      display: "Tiefenschiefer-Eisenerz"
+      icon: DEEPSLATE_IRON_ORE
+      materials: [DEEPSLATE_IRON_ORE]
+      enabled: true
+      max-blocks: 64
       window-minutes: 10
     gold:
       display: "Golderz"
       icon: GOLD_ORE
-      materials: [GOLD_ORE, DEEPSLATE_GOLD_ORE]
+      materials: [GOLD_ORE]
       enabled: true
       max-blocks: 32
+      window-minutes: 10
+    deepslate-gold:
+      display: "Tiefenschiefer-Golderz"
+      icon: DEEPSLATE_GOLD_ORE
+      materials: [DEEPSLATE_GOLD_ORE]
+      enabled: true
+      max-blocks: 32
+      window-minutes: 10
+    redstone:
+      display: "Redstoneerz"
+      icon: REDSTONE_ORE
+      materials: [REDSTONE_ORE]
+      enabled: true
+      max-blocks: 64
+      window-minutes: 10
+    deepslate-redstone:
+      display: "Tiefenschiefer-Redstoneerz"
+      icon: DEEPSLATE_REDSTONE_ORE
+      materials: [DEEPSLATE_REDSTONE_ORE]
+      enabled: true
+      max-blocks: 64
+      window-minutes: 10
+    lapis:
+      display: "Lapislazulierz"
+      icon: LAPIS_ORE
+      materials: [LAPIS_ORE]
+      enabled: true
+      max-blocks: 40
+      window-minutes: 10
+    deepslate-lapis:
+      display: "Tiefenschiefer-Lapislazulierz"
+      icon: DEEPSLATE_LAPIS_ORE
+      materials: [DEEPSLATE_LAPIS_ORE]
+      enabled: true
+      max-blocks: 40
+      window-minutes: 10
+    diamond:
+      display: "Diamanterz"
+      icon: DIAMOND_ORE
+      materials: [DIAMOND_ORE]
+      enabled: true
+      max-blocks: 8
+      window-minutes: 10
+    deepslate-diamond:
+      display: "Tiefenschiefer-Diamanterz"
+      icon: DEEPSLATE_DIAMOND_ORE
+      materials: [DEEPSLATE_DIAMOND_ORE]
+      enabled: true
+      max-blocks: 12
+      window-minutes: 10
+    emerald:
+      display: "Smaragderz"
+      icon: EMERALD_ORE
+      materials: [EMERALD_ORE]
+      enabled: true
+      max-blocks: 8
+      window-minutes: 10
+    deepslate-emerald:
+      display: "Tiefenschiefer-Smaragderz"
+      icon: DEEPSLATE_EMERALD_ORE
+      materials: [DEEPSLATE_EMERALD_ORE]
+      enabled: true
+      max-blocks: 4
+      window-minutes: 10
+    raw-iron-block:
+      display: "Roheisenblock (Erzader)"
+      icon: RAW_IRON_BLOCK
+      materials: [RAW_IRON_BLOCK]
+      enabled: true
+      max-blocks: 24
+      window-minutes: 10
+    raw-copper-block:
+      display: "Rohkupferblock (Erzader)"
+      icon: RAW_COPPER_BLOCK
+      materials: [RAW_COPPER_BLOCK]
+      enabled: true
+      max-blocks: 24
       window-minutes: 10
     nether-gold:
       display: "Nethergolderz"
@@ -399,47 +498,26 @@ xray:
       enabled: true
       max-blocks: 64
       window-minutes: 10
-    iron:
-      display: "Eisenerz"
-      icon: IRON_ORE
-      materials: [IRON_ORE, DEEPSLATE_IRON_ORE]
-      enabled: true
-      max-blocks: 96
-      window-minutes: 10
-    copper:
-      display: "Kupfererz"
-      icon: COPPER_ORE
-      materials: [COPPER_ORE, DEEPSLATE_COPPER_ORE]
-      enabled: true
-      max-blocks: 128
-      window-minutes: 10
-    coal:
-      display: "Kohleerz"
-      icon: COAL_ORE
-      materials: [COAL_ORE, DEEPSLATE_COAL_ORE]
-      enabled: true
-      max-blocks: 160
-      window-minutes: 10
-    redstone:
-      display: "Redstoneerz"
-      icon: REDSTONE_ORE
-      materials: [REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE]
-      enabled: true
-      max-blocks: 64
-      window-minutes: 10
-    lapis:
-      display: "Lapislazulierz"
-      icon: LAPIS_ORE
-      materials: [LAPIS_ORE, DEEPSLATE_LAPIS_ORE]
-      enabled: true
-      max-blocks: 40
-      window-minutes: 10
-    quartz:
+    nether-quartz:
       display: "Netherquarzerz"
       icon: NETHER_QUARTZ_ORE
       materials: [NETHER_QUARTZ_ORE]
       enabled: true
       max-blocks: 128
+      window-minutes: 10
+    ancient-debris:
+      display: "Antiker Schrott"
+      icon: ANCIENT_DEBRIS
+      materials: [ANCIENT_DEBRIS]
+      enabled: true
+      max-blocks: 8
+      window-minutes: 15
+    gilded-blackstone:
+      display: "Golddurchzogener Schwarzstein"
+      icon: GILDED_BLACKSTONE
+      materials: [GILDED_BLACKSTONE]
+      enabled: true
+      max-blocks: 16
       window-minutes: 10
     spawner:
       display: "Spawner"
@@ -448,6 +526,27 @@ xray:
       enabled: true
       max-blocks: 3
       window-minutes: 30
+    stone:
+      display: "Stein"
+      icon: STONE
+      materials: [STONE]
+      enabled: true
+      max-blocks: 2000
+      window-minutes: 10
+    deepslate:
+      display: "Tiefenschiefer"
+      icon: DEEPSLATE
+      materials: [DEEPSLATE]
+      enabled: true
+      max-blocks: 2000
+      window-minutes: 10
+    netherrack:
+      display: "Netherrack"
+      icon: NETHERRACK
+      materials: [NETHERRACK]
+      enabled: true
+      max-blocks: 3000
+      window-minutes: 10
 
 # ─────────────────────────────────────────────────────────────
 #  Mod-/Hack-Client-Erkennung
