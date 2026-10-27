@@ -17,7 +17,9 @@ public final class CombatUtil {
 		List<BoundingBox> list = new ArrayList<>();
 		list.add(target.getBoundingBox());
 		if (targetData != null) {
-			int pingTicks = (int) Math.ceil(Math.max(0, attackerPing) / 50.0);
+			// Ping deckeln: gefakter Ping (verzoegerte KeepAlives) darf das Fenster nicht beliebig aufziehen
+			int cap = dev.atlasac.AtlasAC.instance().getConfig().getInt("checks.reach.max-compensation-ms", 300);
+			int pingTicks = (int) Math.ceil(Math.min(Math.max(0, attackerPing), cap) / 50.0);
 			// 3 Ticks Client-Interpolation + Jitter
 			for (int t = tick - pingTicks - 4; t <= tick - pingTicks + 2; t++) {
 				BoundingBox b = targetData.history.box(t);

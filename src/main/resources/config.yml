@@ -155,6 +155,8 @@ checks:
     tolerance: 0.1
     # Zusaetzliche Toleranz bei Mobs (keine Lag-Compensation-Historie)
     mob-tolerance: 0.4
+    # Maximal kompensierter Ping (gefakter Ping darf das Lag-Fenster nicht aufziehen)
+    max-compensation-ms: 300
     # Speere (26.x) haben eigene Reichweiten -> Check ueberspringen
     ignore-spears: true
   hitbox:
@@ -230,9 +232,25 @@ checks:
     punish: true
     buffer: 2
     decay: 2
-    # Mindestanteil des erhaltenen Knockbacks, den der Spieler umsetzen muss
-    min-ratio: 0.45
+    # Erlaubte Abweichung (Bloecke) beim ersten Knockback-Tick – erkennt Teil-Multiplikatoren, Reversal, Strafe, Lag
+    tolerance: 0.02
   criticals:
+    enabled: true
+    max-vl: 10
+    punish: true
+    buffer: 2
+    decay: 2
+    cancel: true
+
+  killaura-snap:
+    enabled: true
+    max-vl: 8
+    punish: true
+    buffer: 4
+    decay: 2
+    # Yaw-Sprung (Grad) im Tick vor dem Schlag aus dem Stillstand
+    min-snap: 45
+  place:
     enabled: true
     max-vl: 10
     punish: true
@@ -282,6 +300,46 @@ checks:
     max-balance-ms: 150
     # Maximal angespartes Lag-Guthaben (ms)
     min-balance-ms: -500
+
+  noslow:
+    enabled: true
+    max-vl: 15
+    punish: true
+    buffer: 4
+    decay: 3
+    cancel: true
+  phase:
+    enabled: true
+    max-vl: 10
+    punish: true
+    buffer: 1
+    decay: 2
+    cancel: true
+  jesus:
+    enabled: true
+    max-vl: 10
+    punish: true
+    buffer: 0
+    decay: 2
+    cancel: true
+  badpackets-move:
+    enabled: true
+    max-vl: 10
+    punish: true
+    buffer: 2
+    decay: 3
+  badpackets-break:
+    enabled: true
+    max-vl: 8
+    punish: true
+    buffer: 1
+    decay: 2
+  badpackets-rotate:
+    enabled: true
+    max-vl: 5
+    punish: true
+    buffer: 1
+    decay: 1
 
 # ─────────────────────────────────────────────────────────────
 #  Anti-XRay (Abbau-Alerts) – auch ingame per /atlas xray (GUI) einstellbar

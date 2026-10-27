@@ -13,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPistonExtendEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockPistonRetractEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -67,6 +68,15 @@ public final class AtlasListener implements Listener {
 		if (cancel) event.setCancelled(true);
 	}
 
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+	public void onPlace(BlockPlaceEvent event) {
+		Player p = event.getPlayer();
+		PlayerData d = plugin.data().get(p);
+		if (d == null || d.bypass || p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) return;
+		if (tick() < d.exemptUntil) return;
+		if (plugin.checks().place.check(d, p, event.getBlockAgainst(), event.getBlockPlaced())) event.setCancelled(true);
+	}
+
 	// ───────────────────────── Ausnahmen ─────────────────────────
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -84,7 +94,8 @@ public final class AtlasListener implements Listener {
 		PlayerData d = plugin.data().get(p);
 		if (d == null) return;
 		int tick = tick();
-		d.movementExemptUntil = Math.max(d.movementExemptUntil, tick + pingTicks(p) + 30);
+		// Nur das Anwendungsfenster des Knockbacks aussetzen – lange Hurt-Time-Ausnahmen sind ein klassischer Bypass
+		d.movementExemptUntil = Math.max(d.movementExemptUntil, tick + Math.min(pingTicks(p), 20) + 8);
 		if (!d.bypass && tick - d.lastDamageTick <= 1) {
 			plugin.checks().velocity.onVelocity(d, p, event.getVelocity(), tick);
 		}
@@ -148,6 +159,15 @@ public final class AtlasListener implements Listener {
 	private void exempt(Player p, int ticks, Location to) {
 		PlayerData d = plugin.data().get(p);
 		if (d == null) return;
+		if (to != null) {
+			d.teleportRotationCheck = true;
+			d.teleportX = to.getX();
+			d.teleportY = to.getY();
+			d.teleportZ = to.getZ();
+			d.teleportYaw = to.getYaw();
+			d.teleportPitch = to.getPitch();
+			d.teleportCheckUntil = tick() + pingTicks(p) + 40;
+		}
 		d.exemptUntil = Math.max(d.exemptUntil, tick() + pingTicks(p) + ticks);
 		d.resetMovement();
 		d.pendingVelocity = null;

@@ -15,8 +15,12 @@ public final class CriticalsCheck extends Check {
 	public boolean check(PlayerData data, Player attacker, boolean critical) {
 		if (!enabled() || !critical) return false;
 		if (attacker.isInsideVehicle() || attacker.isFlying()) return false;
-		boolean ground = Physics.onGround(attacker.getWorld(), attacker.getBoundingBox());
-		if (ground && data.serverAirTicks < 2) {
+		// Ein echter Crit braucht einen Fall: nach einem Sprung fruehestens ~6 Ticks in der Luft.
+		// Packet-Crits / Mini-Hops bleiben dicht ueber dem Boden.
+		var box = attacker.getBoundingBox();
+		boolean nearGround = attacker.getWorld().hasCollisionsIn(new org.bukkit.util.BoundingBox(box.getMinX(), box.getMinY() - 0.25,
+				box.getMinZ(), box.getMaxX(), box.getMinY() + 1.0E-4, box.getMaxZ()));
+		if (nearGround && data.serverAirTicks < 5) {
 			if (bufferUp(data.buffers, 1)) {
 				flag(data, "Crit am Boden (airTicks=" + data.serverAirTicks + ")");
 			}

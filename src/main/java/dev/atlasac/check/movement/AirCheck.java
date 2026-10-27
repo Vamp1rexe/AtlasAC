@@ -22,9 +22,9 @@ public final class AirCheck extends Check {
 		threshold = cfg.getDouble("threshold", 0.006);
 	}
 
-	public boolean check(PlayerData data, double horizontal, double lastHorizontal) {
+	public boolean check(PlayerData data, double horizontal, double lastHorizontal, double extra) {
 		if (!enabled()) return false;
-		double max = lastHorizontal * Physics.AIR_FRICTION + Physics.SPRINT_AIR_ACCEL + threshold;
+		double max = lastHorizontal * Physics.AIR_FRICTION + Physics.SPRINT_AIR_ACCEL + threshold + extra;
 		if (horizontal > max && horizontal > 0.1) {
 			if (bufferUp(data.buffers, 1)) {
 				flag(data, "speed=" + Text.fmt(horizontal) + " max=" + Text.fmt(max));

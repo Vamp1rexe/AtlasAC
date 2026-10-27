@@ -24,6 +24,14 @@ public final class CheckManager {
 	public final JumpCheck jump;
 	public final GroundSpoofCheck groundSpoof;
 	public final TimerCheck timer;
+	public final BadPacketsCheck badPackets;
+	public final MultiBreakCheck multiBreak;
+	public final NoRotateCheck noRotate;
+	public final NoSlowCheck noSlow;
+	public final PhaseCheck phase;
+	public final JesusCheck jesus;
+	public final PlaceCheck place;
+	public final KillAuraSnapCheck killAuraSnap;
 
 	private final List<Check> all;
 
@@ -45,7 +53,15 @@ public final class CheckManager {
 				air = new AirCheck(plugin),
 				jump = new JumpCheck(plugin),
 				groundSpoof = new GroundSpoofCheck(plugin),
-				timer = new TimerCheck(plugin));
+				timer = new TimerCheck(plugin),
+				badPackets = new BadPacketsCheck(plugin),
+				multiBreak = new MultiBreakCheck(plugin),
+				noRotate = new NoRotateCheck(plugin),
+				noSlow = new NoSlowCheck(plugin),
+				phase = new PhaseCheck(plugin),
+				jesus = new JesusCheck(plugin),
+				place = new PlaceCheck(plugin),
+				killAuraSnap = new KillAuraSnapCheck(plugin));
 		reload();
 	}
 

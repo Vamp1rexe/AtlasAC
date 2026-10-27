@@ -25,6 +25,9 @@ public final class MovementProcessor {
 		for (PlayerData d : plugin.data().all()) {
 			Player p = d.player();
 			if (!p.isOnline()) continue;
+			d.inVehicle = p.isInsideVehicle();
+			d.useTicks = p.hasActiveItem() ? d.useTicks + 1 : 0;
+			d.sneakTicks = p.isSneaking() ? d.sneakTicks + 1 : 0;
 			MoveSample s;
 			while ((s = d.moves.poll()) != null) {
 				if (process(d, p, s, tick, checks)) {
@@ -60,6 +63,11 @@ public final class MovementProcessor {
 			d.hasLastRotation = true;
 		}
 
+		if (s.hasPosition() && s.hasRotation()) {
+			checks.noRotate.check(d, s.x(), s.y(), s.z(), s.yaw(), s.pitch());
+		}
+		if (d.teleportRotationCheck && tick > d.teleportCheckUntil) d.teleportRotationCheck = false;
+
 		if (!s.hasPosition()) {
 			d.hasLastDelta = false;
 			d.lastSampleTick = Long.MIN_VALUE;
@@ -81,22 +89,36 @@ public final class MovementProcessor {
 		boolean consecutive = d.tickEndSupported && s.clientTick() == d.lastSampleTick + 1;
 		BoundingBox box = Physics.boxAt(p, s.x(), s.y(), s.z());
 		boolean serverGround = Physics.onGround(world, box);
-		checks.velocity.onMove(d, dx, dz, tick);
+		boolean jumped = d.lastServerGround && !serverGround && dy > 0.3;
+		checks.velocity.onMove(d, dx, dz, jumped, tick);
 
 		boolean setback = false;
+		if (!exempt) {
+			BoundingBox fromBox = Physics.boxAt(p, d.lastX, d.lastY, d.lastZ);
+			if (checks.phase.check(d, world, fromBox, box, Math.sqrt(dx * dx + dy * dy + dz * dz)) && checks.phase.cancel()) setback = true;
+			// Fluessigkeiten zaehlen sonst als "komplex" und waeren eine Luecke (Jesus / onGround ueber Wasser)
+			if (checks.jesus.check(d, Physics.overLiquidWithoutCollision(world, box), dy, s.onGround()) && checks.jesus.cancel()) setback = true;
+		}
 		if (!exempt && !Physics.complexNearby(world, box)) {
 			if (checks.groundSpoof.check(d, s.onGround(), serverGround)) d.spoofedFall = true;
 
 			if (consecutive) {
 				boolean ceiling = Physics.ceiling(world, box);
+				double h = Math.hypot(dx, dz), lastH = Math.hypot(d.lastDeltaX, d.lastDeltaZ);
+				if (d.lastServerGround && serverGround) {
+					if (checks.noSlow.check(d, p, h) && checks.noSlow.cancel()) setback = true;
+				}
 				if (d.lastServerGround && !serverGround && dy > 0 && !ceiling) {
 					if (checks.jump.check(d, p, dy) && checks.jump.cancel()) setback = true;
 				}
-				if (!d.lastServerGround && !serverGround && d.hasLastDelta && !ceiling
-						&& !Physics.entitiesNearby(p, box, 1.0)) {
-					if (checks.gravity.check(d, dy, d.lastDeltaY) && checks.gravity.cancel()) setback = true;
-					double h = Math.hypot(dx, dz), lastH = Math.hypot(d.lastDeltaX, d.lastDeltaZ);
-					if (checks.air.check(d, h, lastH) && checks.air.cancel()) setback = true;
+				if (!d.lastServerGround && !serverGround && d.hasLastDelta && !ceiling) {
+					// Nur Boote/Shulker/Minecarts geben echte Kollision – andere Entitaeten schieben nur leicht.
+					// (Frueher: komplette Ausnahme bei Entitaeten = bekannter Grim-Speed-Bypass "Collide")
+					if (!Physics.standableEntitiesNearby(p, box)) {
+						if (checks.gravity.check(d, dy, d.lastDeltaY) && checks.gravity.cancel()) setback = true;
+						double push = Math.min(0.3, 0.05 * Physics.pushingEntities(p, box));
+						if (checks.air.check(d, h, lastH, push) && checks.air.cancel()) setback = true;
+					}
 				}
 			}
 		}

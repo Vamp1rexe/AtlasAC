@@ -20,6 +20,21 @@ Paper-Plugin (26.3) mit Grim-artiger Packet-Analyse, starken PvP-Checks, Anti-XR
 - GroundSpoof/NoFall (Fallschaden wird nachträglich angewendet)
 - Timer (Balance über Client-Tick-End-Packets)
 
+**Gepatchte Bypass-Techniken**
+- Entity-Collision-Speed (Grim „Collide“): keine Pauschal-Ausnahme mehr neben Entitäten, nur Vanilla-Push (0.05/Entität)
+- Hurt-Time-Ausnahme verkürzt auf das Knockback-Fenster (vorher 30 Ticks freie Bewegung nach Treffern)
+- Velocity: Projektion auf die Knockback-Richtung – erkennt Teil-Multiplikatoren, Reversal, Strafe, verzögerten KB; Jump-Reset bleibt legit
+- Packet-Criticals / Mini-Hops (Crit dicht am Boden < 5 Luft-Ticks)
+- Mehrere Bewegungs-Packets pro Tick (Silent-Rotations, VanillaSpeed, Packet-Crits, Bursts)
+- Nuker / PacketMine (mehrere Abbau-Starts pro Tick)
+- NoRotate (Server-Rotation nach Teleport ignoriert)
+- NoSlow (Item benutzen, Schild, Schleichen inkl. Swift Sneak)
+- Phase / VClip / ClickTP
+- Jesus / gespooftes onGround über Flüssigkeiten
+- Scaffold / Grim-Place: Airplace, Platzieren an Flüssigkeit, Reichweite, Blick trifft Block nicht
+- Silent-Aura-Snap (großer Yaw-Sprung aus dem Stillstand direkt vor dem Schlag)
+- Ping-Spoofing: Lag-Compensation auf 300 ms gedeckelt
+
 **Anti-XRay** – Alert, wenn in einem Zeitfenster zu viele Erze einer Gruppe abgebaut werden (inkl. Erz/Stein-Verhältnis). Einstellbar per GUI (`/atlas xray`) oder `config.yml`.
 
 **Anti-Dupe** – jedes nicht stapelbare Item bekommt eine versteckte ID. Gleiche ID an zwei Orten gleichzeitig → Kopie wird gelöscht, Alert ans Team, Spieler wird geflaggt (Standard: Kick).

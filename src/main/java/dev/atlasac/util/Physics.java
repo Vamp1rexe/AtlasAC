@@ -73,6 +73,55 @@ public final class Physics {
 		return false;
 	}
 
+	/** Kollidiert die Box mit Block-Kollisionsformen (ohne Entitaeten)? */
+	public static boolean blockCollides(World world, BoundingBox box) {
+		int minX = floor(box.getMinX()), maxX = floor(box.getMaxX());
+		int minY = floor(box.getMinY()), maxY = floor(box.getMaxY());
+		int minZ = floor(box.getMinZ()), maxZ = floor(box.getMaxZ());
+		for (int x = minX; x <= maxX; x++) {
+			for (int y = minY; y <= maxY; y++) {
+				for (int z = minZ; z <= maxZ; z++) {
+					Block b = world.getBlockAt(x, y, z);
+					if (b.getType().isAir() || b.isPassable()) continue;
+					BoundingBox local = box.clone().shift(-x, -y, -z);
+					if (b.getCollisionShape().overlaps(local)) return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/** Fluessigkeit direkt unter den Fuessen, aber nichts, worauf man stehen koennte. */
+	public static boolean overLiquidWithoutCollision(World world, BoundingBox box) {
+		BoundingBox below = new BoundingBox(box.getMinX(), box.getMinY() - 0.1, box.getMinZ(), box.getMaxX(), box.getMinY(), box.getMaxZ());
+		if (world.hasCollisionsIn(below)) return false;
+		int y = floor(box.getMinY() - 0.1);
+		for (int x = floor(box.getMinX()); x <= floor(box.getMaxX()); x++) {
+			for (int z = floor(box.getMinZ()); z <= floor(box.getMaxZ()); z++) {
+				if (world.getBlockAt(x, y, z).isLiquid()) return true;
+			}
+		}
+		return false;
+	}
+
+	/** Anzahl schiebender Entitaeten direkt an der Hitbox (Vanilla-Push max. ~0.05 pro Entitaet und Tick). */
+	public static int pushingEntities(Player player, BoundingBox box) {
+		int n = 0;
+		for (Entity e : player.getWorld().getNearbyEntities(box.clone().expand(0.3))) {
+			if (e.equals(player)) continue;
+			if (e instanceof LivingEntity || e instanceof org.bukkit.entity.Vehicle) n++;
+		}
+		return n;
+	}
+
+	/** Boote, Shulker, Minecarts – darauf kann man stehen, also echte Kollision. */
+	public static boolean standableEntitiesNearby(Player player, BoundingBox box) {
+		for (Entity e : player.getWorld().getNearbyEntities(box.clone().expand(1.0))) {
+			if (e instanceof org.bukkit.entity.Vehicle || e instanceof org.bukkit.entity.Shulker) return true;
+		}
+		return false;
+	}
+
 	/** Abstand eines Punktes zu einer Box (0, wenn innen). */
 	public static double distance(double px, double py, double pz, BoundingBox b) {
 		double dx = Math.max(Math.max(b.getMinX() - px, 0), px - b.getMaxX());

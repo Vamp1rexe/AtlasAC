@@ -45,6 +45,18 @@ public final class AtlasPacketListener extends PacketListenerAbstract {
 		if (WrapperPlayClientPlayerFlying.isFlying(type)) {
 			WrapperPlayClientPlayerFlying w = new WrapperPlayClientPlayerFlying(event);
 			Location loc = w.getLocation();
+			d.movesThisTick++;
+			if (w.hasRotationChanged()) {
+				if (d.nettyHasRotation) {
+					d.nettyPrevDeltaYaw = d.nettyDeltaYaw;
+					d.nettyDeltaYaw = Math.abs(loc.getYaw() - d.nettyLastYaw);
+				}
+				d.nettyLastYaw = loc.getYaw();
+				d.nettyHasRotation = true;
+			} else {
+				d.nettyPrevDeltaYaw = d.nettyDeltaYaw;
+				d.nettyDeltaYaw = 0;
+			}
 			d.moves.add(new MoveSample(w.hasPositionChanged(), loc.getX(), loc.getY(), loc.getZ(),
 					w.hasRotationChanged(), loc.getYaw(), loc.getPitch(), w.isOnGround(), d.clientTick, now));
 			return;
@@ -54,6 +66,11 @@ public final class AtlasPacketListener extends PacketListenerAbstract {
 			if (!d.bypass) {
 				checks.timer.onTickEnd(d, now);
 				checks.killAuraNoSwing.onTickEnd(d);
+				checks.badPackets.onTickEnd(d);
+				checks.multiBreak.onTickEnd(d);
+			} else {
+				d.movesThisTick = 0;
+				d.digStartsThisTick = 0;
 			}
 			d.clientTick++;
 			return;
@@ -62,7 +79,10 @@ public final class AtlasPacketListener extends PacketListenerAbstract {
 			WrapperPlayClientInteractEntity w = new WrapperPlayClientInteractEntity(event);
 			if (w.getAction() == WrapperPlayClientInteractEntity.InteractAction.ATTACK) {
 				d.attackedThisTick = true;
-				if (!d.bypass) checks.killAuraMulti.onAttack(d, w.getEntityId());
+				if (!d.bypass) {
+					checks.killAuraMulti.onAttack(d, w.getEntityId());
+					checks.killAuraSnap.onAttack(d);
+				}
 			} else {
 				d.lastPlaceNanos = now;
 			}
@@ -82,6 +102,7 @@ public final class AtlasPacketListener extends PacketListenerAbstract {
 			DiggingAction action = w.getAction();
 			if (action == DiggingAction.START_DIGGING) {
 				d.digging = true;
+				d.digStartsThisTick++;
 				d.lastDigActionNanos = now;
 			} else if (action == DiggingAction.CANCELLED_DIGGING || action == DiggingAction.FINISHED_DIGGING) {
 				d.digging = false;

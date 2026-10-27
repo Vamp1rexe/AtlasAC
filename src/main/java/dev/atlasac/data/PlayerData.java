@@ -46,6 +46,14 @@ public final class PlayerData {
 	public boolean attackedThisTick;
 	public boolean swungThisTick;
 	public final Map<String, Double> nettyBuffers = new HashMap<>();
+	public int movesThisTick;
+	public int digStartsThisTick;
+	public boolean nettyHasRotation;
+	public float nettyLastYaw;
+	public float nettyDeltaYaw;
+	public float nettyPrevDeltaYaw;
+	/** Im Haupt-Thread gesetzt, im Netty-Thread gelesen. */
+	public volatile boolean inVehicle;
 
 	// ───── Main ─────
 	public final Map<String, Double> buffers = new HashMap<>();
@@ -66,6 +74,13 @@ public final class PlayerData {
 	public int lastDamageTick = -10_000;
 	public int movementExemptUntil;
 	public double fallDistance;
+	public int useTicks;
+	public int sneakTicks;
+	public int jesusTicks;
+	public boolean teleportRotationCheck;
+	public double teleportX, teleportY, teleportZ;
+	public float teleportYaw, teleportPitch;
+	public int teleportCheckUntil;
 	public boolean spoofedFall;
 
 	public Vector pendingVelocity;
@@ -73,6 +88,7 @@ public final class PlayerData {
 	public int velocityDeadline;
 	public double velocityMaxHorizontal;
 	public int velocitySamples;
+	public boolean velocityJumped;
 
 	public final ArrayDeque<double[]> aimOffsets = new ArrayDeque<>();
 
