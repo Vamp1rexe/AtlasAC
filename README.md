@@ -26,6 +26,10 @@ Paper-Plugin (26.3) mit Grim-artiger Packet-Analyse, starken PvP-Checks, Anti-XR
 
 **Strafsystem** – eigener Kick-/Ban-Screen („Kicked by Atlas AntiCheat“ / „Banned by Atlas AntiCheat“ mit Fall-ID), Ban, Tempban, IP-Ban, Temp-IP-Ban, Mute, Freeze, Historie, Alt-Account-Alerts über die IP. Atlas kickt ab Werk bei jedem Check und bannt nach 3 Kicks in 24h automatisch für 7 Tage. Wer eingefroren den Server verlässt, wird 30 Tage gebannt. Daten liegen standardmäßig lokal in `plugins/AtlasAC/data.yml`; per `storage.type` auch SQLite, MySQL, MariaDB oder PostgreSQL (Treiber werden automatisch geladen, bestehende data.yml wird beim Umstieg migriert).
 
+**Staff-Modus** (`/staff`) – sichert Inventar, Position und Spielmodus (auch bei Absturz), Vanish, Fliegen, unverwundbar und Werkzeuge: Einfrieren, Inventar/Enderkiste ansehen, Spieler-Info, Zufalls-Teleport, Vanish an/aus, Admin-GUI. Nochmal `/staff` → alles zurück und Teleport zur Startposition.
+
+**Admin-GUI** (`/atlas gui`) – alle Spieler mit Ping, Client-Brand, Version und Flags; pro Spieler: Teleport, Freeze, Inventar, Enderkiste, Flags + XRay-Statistik, Historie (aktive Strafen per Shift-Rechtsklick aufheben) und Schnell-Strafen (`staff-gui.presets`).
+
 ## Befehle
 | Befehl | Recht |
 |---|---|
@@ -41,6 +45,8 @@ Paper-Plugin (26.3) mit Grim-artiger Packet-Analyse, starken PvP-Checks, Anti-XR
 | `/atlas unban <Spieler> [-ip]` · `/atlas unbanip <Spieler\|IP>` | atlasac.unban / atlasac.unbanip |
 | `/atlas mute` · `/atlas tempmute` · `/atlas unmute` | atlasac.mute / tempmute / unmute |
 | `/atlas history <Spieler>` | atlasac.history |
+| `/staff` · `/staff vanish` · `/staff gui` | atlasac.staff (Vanish sehen: atlasac.vanish.see, fremde Inventare bearbeiten: atlasac.staff.invedit) |
+| `/atlas gui [Spieler]` | atlasac.gui |
 | `/atlas freezecmd add\|remove\|list <Befehl>` | atlasac.admin |
 
 Dauer-Format: `30m`, `12h`, `7d`, `2w`, `1mo`, `1y`, kombinierbar (`1d12h`) oder `permanent`.

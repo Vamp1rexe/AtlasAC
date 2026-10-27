@@ -85,6 +85,15 @@ public final class AtlasCommand implements BasicCommand {
 			case "xray" -> xray(s, args);
 			case "dupe" -> dupe(s, args);
 			case "freezecmd" -> freezeCommands(s, args);
+			case "gui" -> {
+				if (!(s instanceof Player p)) {
+					msg(s, "<red>Nur ingame.");
+					return;
+				}
+				Player t = args.length > 1 ? Bukkit.getPlayerExact(args[1]) : null;
+				if (t != null) plugin.adminGui().openPlayer(p, t.getUniqueId());
+				else plugin.adminGui().openList(p, 0);
+			}
 			default -> {
 				String sub = args[0].toLowerCase();
 				if (PunishCommands.SUBS.contains(sub)) punish.execute(s, sub, args);
@@ -200,6 +209,8 @@ public final class AtlasCommand implements BasicCommand {
 				"/atlas xray reset <Spieler> <gray>– Statistik zuruecksetzen",
 				"/atlas dupe scan <gray>– Sofort-Scan nach Dupes",
 				"/atlas dupe check <gray>– ID des Items in der Hand",
+				"/atlas gui [Spieler] <gray>– Admin-GUI",
+				"/staff <gray>– Staff-Modus (Vanish + Werkzeuge) · <aqua>/staff vanish",
 				"/atlas freeze <Spieler> <gray>– Einfrieren / Auftauen",
 				"/atlas freezecmd add|remove|list <gray>– Erlaubte Befehle im Freeze",
 				"/atlas kick <Spieler> [Grund]",
@@ -219,14 +230,14 @@ public final class AtlasCommand implements BasicCommand {
 	public Collection<String> suggest(CommandSourceStack source, String[] args) {
 		List<String> out = new ArrayList<>();
 		if (args.length <= 1) {
-			out.addAll(List.of("alerts", "vl", "xray", "dupe", "reload", "freezecmd"));
+			out.addAll(List.of("alerts", "vl", "xray", "dupe", "reload", "freezecmd", "gui"));
 			out.addAll(PunishCommands.SUBS);
 		} else if (args.length == 2) {
 			switch (args[0].toLowerCase()) {
 				case "xray" -> out.addAll(List.of("gui", "stats", "reset"));
 				case "dupe" -> out.addAll(List.of("scan", "check"));
 				case "freezecmd" -> out.addAll(List.of("add", "remove", "list"));
-				case "vl", "violations" -> Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
+				case "vl", "violations", "gui" -> Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
 				default -> {
 					if (PunishCommands.SUBS.contains(args[0].toLowerCase())) Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
 				}

@@ -191,6 +191,13 @@ public final class PunishmentManager implements Listener {
 	/** Spielername (online/offline) oder IP. */
 	public Target resolve(String input) {
 		if (isIp(input)) return new Target(null, input, input);
+		try {
+			UUID uuid = UUID.fromString(input);
+			Player p = Bukkit.getPlayer(uuid);
+			if (p != null) return new Target(uuid, p.getName(), ipOf(p));
+			return new Target(uuid, names.getOrDefault(uuid, input), ips.get(uuid));
+		} catch (IllegalArgumentException ignored) {
+		}
 		Player online = Bukkit.getPlayerExact(input);
 		if (online != null) return new Target(online.getUniqueId(), online.getName(), ipOf(online));
 		UUID known = byName.get(input.toLowerCase(Locale.ROOT));

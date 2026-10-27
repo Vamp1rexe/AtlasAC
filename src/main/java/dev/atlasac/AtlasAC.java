@@ -13,6 +13,10 @@ import dev.atlasac.data.PlayerData;
 import dev.atlasac.dupe.DupeManager;
 import dev.atlasac.packet.AtlasPacketListener;
 import dev.atlasac.punish.FreezeManager;
+import dev.atlasac.command.StaffCommand;
+import dev.atlasac.gui.AdminGui;
+import dev.atlasac.gui.MenuListener;
+import dev.atlasac.staff.StaffModeManager;
 import dev.atlasac.punish.PunishmentManager;
 import dev.atlasac.xray.XrayGui;
 import dev.atlasac.xray.XrayManager;
@@ -41,6 +45,8 @@ public final class AtlasAC extends JavaPlugin {
 	private DupeManager dupe;
 	private PunishmentManager punishments;
 	private FreezeManager freeze;
+	private StaffModeManager staffMode;
+	private AdminGui adminGui;
 	private PacketListenerCommon packetListener;
 	private static AtlasAC instance;
 
@@ -61,6 +67,10 @@ public final class AtlasAC extends JavaPlugin {
 		for (String sub : List.of("ban", "tempban", "ipban", "tempipban", "unban", "unbanip", "kick", "mute", "tempmute", "unmute", "freeze", "history")) {
 			registerPermission("atlasac." + sub, "Erlaubt /atlas " + sub, PermissionDefault.OP);
 		}
+		registerPermission(StaffModeManager.PERM_STAFF, "Erlaubt /staff (Staff-Modus)", PermissionDefault.OP);
+		registerPermission(StaffModeManager.PERM_SEE_VANISH, "Sieht Spieler im Vanish", PermissionDefault.OP);
+		registerPermission(StaffModeManager.PERM_INV_EDIT, "Darf fremde Inventare bearbeiten", PermissionDefault.OP);
+		registerPermission(AdminGui.PERM_GUI, "Erlaubt das Admin-GUI", PermissionDefault.OP);
 
 		data = new DataManager();
 		alerts = new AlertManager(this);
@@ -75,6 +85,8 @@ public final class AtlasAC extends JavaPlugin {
 		punishments = new PunishmentManager(this);
 		punishments.load();
 		freeze = new FreezeManager(this);
+		staffMode = new StaffModeManager(this);
+		adminGui = new AdminGui(this);
 
 		var pm = getServer().getPluginManager();
 		pm.registerEvents(new AtlasListener(this), this);
@@ -83,6 +95,8 @@ public final class AtlasAC extends JavaPlugin {
 		pm.registerEvents(dupe, this);
 		pm.registerEvents(punishments, this);
 		pm.registerEvents(freeze, this);
+		pm.registerEvents(staffMode, this);
+		pm.registerEvents(new MenuListener(), this);
 
 		packetListener = PacketEvents.getAPI().getEventManager().registerListener(new AtlasPacketListener(this));
 
@@ -95,14 +109,17 @@ public final class AtlasAC extends JavaPlugin {
 
 		Bukkit.getScheduler().runTaskTimer(this, () -> movement.tick(Bukkit.getCurrentTick()), 1L, 1L);
 		Bukkit.getScheduler().runTaskTimer(this, () -> {
-			for (PlayerData d : data.all()) d.bypass = d.player().hasPermission(PERM_BYPASS);
+			for (PlayerData d : data.all()) d.bypass = d.player().hasPermission(PERM_BYPASS) || staffMode.inStaffMode(d.player());
 		}, 40L, 40L);
 		long decay = Math.max(1, getConfig().getLong("violations.decay-interval-seconds", 60)) * 20L;
 		Bukkit.getScheduler().runTaskTimer(this, violations::decay, decay, decay);
 		scheduleDupeScan();
 
 		getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, event ->
-				event.registrar().register("atlas", "Atlas AntiCheat", List.of("atlasac", "ac"), new AtlasCommand(this)));
+		{
+			event.registrar().register("atlas", "Atlas AntiCheat", List.of("atlasac", "ac"), new AtlasCommand(this));
+			event.registrar().register("staff", "Atlas Staff-Modus", List.of("staffmode", "sm", "stuff"), new StaffCommand(this));
+		});
 
 		getLogger().info("Atlas AntiCheat aktiv – " + checks.all().size() + " Checks, Anti-XRay "
 				+ (getConfig().getBoolean("xray.enabled") ? "an" : "aus") + ", Anti-Dupe "
@@ -114,6 +131,7 @@ public final class AtlasAC extends JavaPlugin {
 		if (packetListener != null) {
 			PacketEvents.getAPI().getEventManager().unregisterListener(packetListener);
 		}
+		if (staffMode != null) staffMode.disableAll();
 		if (punishments != null) punishments.save();
 	}
 
@@ -171,5 +189,13 @@ public final class AtlasAC extends JavaPlugin {
 
 	public FreezeManager freeze() {
 		return freeze;
+	}
+
+	public StaffModeManager staffMode() {
+		return staffMode;
+	}
+
+	public AdminGui adminGui() {
+		return adminGui;
 	}
 }

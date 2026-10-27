@@ -108,6 +108,23 @@ freeze:
   # Befehle, die eingefrorene Spieler noch nutzen duerfen – ingame: /atlas freezecmd add|remove|list
   allowed-commands: [msg, tell, w, r, reply, helpop]
 
+staff-mode:
+  # Beim Betreten von /staff automatisch unsichtbar werden
+  vanish-on-enter: true
+
+# Schnell-Strafen im Admin-GUI (/atlas gui -> Spieler -> Bestrafen)
+# type: kick | mute | ban | ipban   duration: z.B. 30m, 1d, 7d, 30d, permanent
+staff-gui:
+  presets:
+    - {name: "Kick: Cheating", type: kick, duration: "0", reason: "Cheating", icon: LEATHER_BOOTS}
+    - {name: "Mute 1 Std: Spam", type: mute, duration: 1h, reason: "Spam", icon: PAPER}
+    - {name: "Mute 1 Tag: Beleidigung", type: mute, duration: 1d, reason: "Beleidigung", icon: WRITABLE_BOOK}
+    - {name: "Ban 3 Tage: Griefing", type: ban, duration: 3d, reason: "Griefing", icon: TNT}
+    - {name: "Ban 7 Tage: Bugusing", type: ban, duration: 7d, reason: "Bugusing", icon: SPIDER_EYE}
+    - {name: "Ban 30 Tage: Cheating", type: ban, duration: 30d, reason: "Cheating", icon: IRON_SWORD}
+    - {name: "Ban permanent: Cheating", type: ban, duration: permanent, reason: "Cheating", icon: NETHERITE_SWORD}
+    - {name: "IP-Ban permanent: Ban-Umgehung", type: ipban, duration: permanent, reason: "Ban-Umgehung", icon: BARRIER}
+
 mute:
   message: "%prefix%<red>Du bist gemutet. <gray>Grund: <white>%reason% <dark_gray>| <gray>Endet: <white>%expires%"
   blocked-commands: [msg, tell, w, r, reply, me, say, mail]
