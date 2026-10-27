@@ -77,6 +77,41 @@ public final class AtlasListener implements Listener {
 		if (plugin.checks().place.check(d, p, event.getBlockAgainst(), event.getBlockPlaced())) event.setCancelled(true);
 	}
 
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+	public void onContainerClick(org.bukkit.event.inventory.InventoryClickEvent event) {
+		if (!(event.getWhoClicked() instanceof Player p)) return;
+		var top = event.getView().getTopInventory().getType();
+		if (top == org.bukkit.event.inventory.InventoryType.CRAFTING || top == org.bukkit.event.inventory.InventoryType.CREATIVE
+				|| top == org.bukkit.event.inventory.InventoryType.PLAYER) return;
+		if (event.getInventory().getHolder(false) instanceof dev.atlasac.gui.Menu) return;
+		PlayerData d = plugin.data().get(p);
+		if (d == null || d.bypass || p.getGameMode() == GameMode.CREATIVE) return;
+		if (plugin.checks().chestStealer.onClick(d, System.currentTimeMillis())) event.setCancelled(true);
+	}
+
+	@EventHandler(priority = EventPriority.MONITOR)
+	public void onUseStart(org.bukkit.event.player.PlayerInteractEvent event) {
+		var a = event.getAction();
+		if (a != org.bukkit.event.block.Action.RIGHT_CLICK_AIR && a != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) return;
+		var item = event.getItem();
+		if (item == null) return;
+		String k = item.getType().getKey().getKey();
+		if (item.getType().isEdible() || k.contains("potion") || k.equals("milk_bucket") || k.equals("honey_bottle")) {
+			PlayerData d = plugin.data().get(event.getPlayer());
+			if (d != null) d.useStartTick = tick();
+		}
+	}
+
+	@EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+	public void onConsume(org.bukkit.event.player.PlayerItemConsumeEvent event) {
+		Player p = event.getPlayer();
+		PlayerData d = plugin.data().get(p);
+		if (d == null || d.bypass || p.getGameMode() == GameMode.CREATIVE || d.useStartTick < 0) return;
+		int used = tick() - d.useStartTick;
+		d.useStartTick = -1;
+		if (plugin.checks().fastUse.check(d, used)) event.setCancelled(true);
+	}
+
 	// ───────────────────────── Ausnahmen ─────────────────────────
 
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)

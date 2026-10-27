@@ -77,6 +77,9 @@ public final class PlayerData {
 	public int useTicks;
 	public int sneakTicks;
 	public int jesusTicks;
+	public int containerOpenTicks;
+	public final ArrayDeque<Long> containerClicks = new ArrayDeque<>();
+	public int useStartTick = -1;
 	public boolean teleportRotationCheck;
 	public double teleportX, teleportY, teleportZ;
 	public float teleportYaw, teleportPitch;

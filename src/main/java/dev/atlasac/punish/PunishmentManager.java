@@ -242,7 +242,7 @@ public final class PunishmentManager implements Listener {
 		Player online = Bukkit.getPlayer(t.uuid());
 		if (online != null) online.kick(screen(p));
 		if (announce) {
-			announce(t.name(), staff, duration < 0 ? "permanent gebannt" : "fuer " + Durations.format(duration) + " gebannt", reason);
+			announce(t.name(), staff, duration < 0 ? "permanent gebannt" : "fuer " + Durations.format(duration) + " gebannt", reason, true, duration);
 			plugin.discord().sendBan(p, t.uuid().toString(), false);
 		}
 		return p;
@@ -258,7 +258,7 @@ public final class PunishmentManager implements Listener {
 		for (Player online : Bukkit.getOnlinePlayers()) {
 			if (ip.equals(ipOf(online))) online.kick(screen);
 		}
-		announce(t.name(), staff, duration < 0 ? "permanent IP-gebannt" : "fuer " + Durations.format(duration) + " IP-gebannt", reason);
+		announce(t.name(), staff, duration < 0 ? "permanent IP-gebannt" : "fuer " + Durations.format(duration) + " IP-gebannt", reason, true, duration);
 		plugin.discord().sendBan(p, t.uuid() == null ? null : t.uuid().toString(), true);
 		return p;
 	}
@@ -270,14 +270,14 @@ public final class PunishmentManager implements Listener {
 		Punishment p = create(Type.MUTE, t.uuid().toString(), t.name(), reason, staff, duration);
 		Player online = Bukkit.getPlayer(t.uuid());
 		if (online != null) online.sendMessage(muteMessage(p));
-		announce(t.name(), staff, duration < 0 ? "permanent gemutet" : "fuer " + Durations.format(duration) + " gemutet", reason);
+		announce(t.name(), staff, duration < 0 ? "permanent gemutet" : "fuer " + Durations.format(duration) + " gemutet", reason, false, duration);
 		return p;
 	}
 
 	public Punishment kick(Player target, String reason, String staff, boolean announce) {
 		Punishment p = create(Type.KICK, target.getUniqueId().toString(), target.getName(), reason, staff, 0);
 		target.kick(screen(p));
-		if (announce) announce(target.getName(), staff, "gekickt", reason);
+		if (announce) announce(target.getName(), staff, "gekickt", reason, false, 0);
 		return p;
 	}
 
@@ -308,8 +308,8 @@ public final class PunishmentManager implements Listener {
 			}
 		}
 		kick(player, reason, STAFF_ATLAS, false);
-		plugin.alerts().broadcast(plugin.getConfig().getString("punishment.broadcast", "")
-				.replace("%player%", player.getName()).replace("%check%", check));
+		String staffMsg = plugin.getConfig().getString("punishment.broadcast", "");
+		if (!staffMsg.isBlank()) plugin.alerts().send(staffMsg.replace("%player%", player.getName()).replace("%check%", check));
 	}
 
 	public int unban(UUID uuid) {
@@ -386,11 +386,21 @@ public final class PunishmentManager implements Listener {
 				"%player%", p.name()));
 	}
 
-	private void announce(String player, String staff, String action, String reason) {
-		String t = plugin.getConfig().getString("bans.broadcast", "");
-		if (t.isBlank()) return;
-		plugin.alerts().broadcast(Text.apply(t, Map.of("%player%", player, "%staff%", Text.escape(staff),
-				"%action%", action, "%reason%", Text.escape(reason))));
+	/**
+	 * Team bekommt immer die Details (Alert). Oeffentlich wird nur bei Bans gemeldet –
+	 * ohne Grund, nur "Banned by Atlas AntiCheat | Dauer". Kicks und Mutes sieht nur das Team.
+	 */
+	private void announce(String player, String staff, String action, String reason, boolean publicBan, long duration) {
+		String staffAlert = plugin.getConfig().getString("bans.staff-alert", "");
+		if (!staffAlert.isBlank()) {
+			plugin.alerts().send(Text.apply(staffAlert, Map.of("%player%", player, "%staff%", Text.escape(staff),
+					"%action%", action, "%reason%", Text.escape(reason))));
+		}
+		if (!publicBan) return;
+		String pub = plugin.getConfig().getString("bans.public-broadcast", "");
+		if (pub.isBlank()) return;
+		plugin.alerts().broadcast(Text.apply(pub, Map.of("%player%", player,
+				"%duration%", duration < 0 ? "Permanent" : Durations.format(duration))));
 	}
 
 	// ───────────────────────── Events ─────────────────────────

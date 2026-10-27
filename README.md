@@ -14,8 +14,10 @@ Paper-Plugin (26.3) mit Grim-artiger Packet-Analyse, starken PvP-Checks, Anti-XR
 - Aim: Sensitivity-GCD, Modulo-360-Snaps, Aim-Lock (zu konstanter Ziel-Offset)
 - AutoClicker: CPS-Limit + Klick-Konsistenz
 - Velocity (Anti-Knockback), Criticals (Packet-Crits)
+- ChestStealer, FastUse (Essen/Tränke)
 
 **Movement (Prediction)**
+- Boden-Speed (Vanilla-Reibung + Beschleunigung, auch ohne Springen), Step, FastLadder, NoWeb, InventoryMove
 - Gravity-Vorhersage (Vanilla-Physik), Luft-Speed-Vorhersage, Jump-Höhe
 - GroundSpoof/NoFall (Fallschaden wird nachträglich angewendet)
 - Timer (Balance über Client-Tick-End-Packets)
@@ -74,6 +76,7 @@ Dauer-Format: `30m`, `12h`, `7d`, `2w`, `1mo`, `1y`, kombinierbar (`1d12h`) oder
 `atlasac.bypass` – Spieler wird nicht geprüft (Standard: niemand).
 
 ## Hinweise
+- Öffentlich wird nur bei Bans gemeldet („Banned by Atlas AntiCheat | Dauer“), Kicks und Mutes sieht nur das Team.
 - Alle Checks kicken ab Werk (`punish: true`), Movement-Checks setzen zusätzlich zurück. Eskalation zum Tempban unter `punishment.auto-ban`.
 - Movement-Checks brauchen 1.21.2+-Clients (Tick-End-Packets); ältere Clients über ViaVersion werden davon ausgenommen.
 - Die Prediction ist eine vereinfachte Vanilla-Physik, kein vollständiger Grim-Simulator. Grenzwerte nach ersten Tests in der `config.yml` nachjustieren.

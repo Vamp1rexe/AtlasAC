@@ -122,6 +122,43 @@ public final class Physics {
 		return false;
 	}
 
+	/** Rutschigkeit des Blocks unter einer Position (Vanilla-Werte). */
+	public static double slipperiness(World world, double x, double y, double z) {
+		Material m = world.getBlockAt(floor(x), floor(y - 0.5000001), floor(z)).getType();
+		String k = m.getKey().getKey();
+		if (k.equals("blue_ice")) return 0.989;
+		if (k.equals("ice") || k.equals("packed_ice") || k.equals("frosted_ice")) return 0.98;
+		if (k.equals("slime_block")) return 0.8;
+		return 0.6;
+	}
+
+	/** Fluessigkeiten, Blasensaeulen, Puderschnee oder Spinnweben in der Naehe (Sonderphysik). */
+	public static boolean fluidNearby(World world, BoundingBox box) {
+		for (int x = floor(box.getMinX() - 0.3); x <= floor(box.getMaxX() + 0.3); x++) {
+			for (int y = floor(box.getMinY() - 0.3); y <= floor(box.getMaxY() + 0.3); y++) {
+				for (int z = floor(box.getMinZ() - 0.3); z <= floor(box.getMaxZ() + 0.3); z++) {
+					Block b = world.getBlockAt(x, y, z);
+					if (b.isLiquid()) return true;
+					String k = b.getType().getKey().getKey();
+					if (k.equals("bubble_column") || k.equals("powder_snow") || k.equals("cobweb") || k.equals("water")) return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/** Steckt die Hitbox in einer Spinnwebe? */
+	public static boolean inCobweb(World world, BoundingBox box) {
+		for (int x = floor(box.getMinX()); x <= floor(box.getMaxX()); x++) {
+			for (int y = floor(box.getMinY()); y <= floor(box.getMaxY()); y++) {
+				for (int z = floor(box.getMinZ()); z <= floor(box.getMaxZ()); z++) {
+					if (world.getBlockAt(x, y, z).getType() == Material.COBWEB) return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	/** Abstand eines Punktes zu einer Box (0, wenn innen). */
 	public static double distance(double px, double py, double pz, BoundingBox b) {
 		double dx = Math.max(Math.max(b.getMinX() - px, 0), px - b.getMaxX());

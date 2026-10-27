@@ -32,6 +32,13 @@ public final class CheckManager {
 	public final JesusCheck jesus;
 	public final PlaceCheck place;
 	public final KillAuraSnapCheck killAuraSnap;
+	public final GroundSpeedCheck groundSpeed;
+	public final StepCheck step;
+	public final FastLadderCheck fastLadder;
+	public final InvMoveCheck invMove;
+	public final NoWebCheck noWeb;
+	public final ChestStealerCheck chestStealer;
+	public final FastUseCheck fastUse;
 
 	private final List<Check> all;
 
@@ -61,7 +68,14 @@ public final class CheckManager {
 				phase = new PhaseCheck(plugin),
 				jesus = new JesusCheck(plugin),
 				place = new PlaceCheck(plugin),
-				killAuraSnap = new KillAuraSnapCheck(plugin));
+				killAuraSnap = new KillAuraSnapCheck(plugin),
+				groundSpeed = new GroundSpeedCheck(plugin),
+				step = new StepCheck(plugin),
+				fastLadder = new FastLadderCheck(plugin),
+				invMove = new InvMoveCheck(plugin),
+				noWeb = new NoWebCheck(plugin),
+				chestStealer = new ChestStealerCheck(plugin),
+				fastUse = new FastUseCheck(plugin));
 		reload();
 	}
 

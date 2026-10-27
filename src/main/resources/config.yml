@@ -16,6 +16,7 @@ alerts:
 punishment:
   # Atlas kickt selbst mit dem Kick-Screen unten. Zusaetzliche Konsolen-Befehle (ohne fuehrenden /) optional:
   commands: []
+  # Nur fuer das Team sichtbar (atlasac.alerts)
   broadcast: "%prefix%<red>%player% <gray>wurde von Atlas wegen <aqua>%check%</aqua> gekickt."
   # Eskalation: so viele Atlas-Kicks innerhalb des Zeitfensters -> automatischer Tempban
   auto-ban:
@@ -91,8 +92,10 @@ storage:
     characterEncoding: utf8
 
 bans:
-  # Broadcast an alle Spieler (leer = aus)
-  broadcast: "%prefix%<red>%player% <gray>wurde von <white>%staff%</white> %action%. <dark_gray>(<gray>%reason%<dark_gray>)"
+  # Oeffentlich fuer alle Spieler – nur bei Bans, ohne Grund (leer = aus). Platzhalter: %player% %duration%
+  public-broadcast: "<dark_gray>[<gradient:#7b5cff:#00d4ff><bold>Atlas</bold></gradient><dark_gray>] <dark_red><bold>✖</bold> <white>%player% <dark_gray>» <gradient:#ff4d4d:#b30000><bold>Banned by Atlas AntiCheat</bold></gradient> <dark_gray>| <gray>%duration%"
+  # Nur fuer das Team (atlasac.alerts): jede Strafe mit Details. Kicks und Mutes sieht nur das Team.
+  staff-alert: "%prefix%<red>%player% <gray>wurde von <white>%staff%</white> %action%. <dark_gray>(<gray>%reason%<dark_gray>)"
   # Team bekommt einen Alert, wenn jemand mit der IP eines gebannten Accounts joint
   alt-alerts: true
 
@@ -156,9 +159,9 @@ checks:
   # ── PvP ────────────────────────────────────────────────────
   reach:
     enabled: true
-    max-vl: 10
+    max-vl: 6
     punish: true
-    buffer: 1.5
+    buffer: 1
     decay: 2
     cancel: true
     # Toleranz auf die Interaction-Range des Spielers (Attribut, Standard 3.0)
@@ -171,9 +174,9 @@ checks:
     ignore-spears: true
   hitbox:
     enabled: true
-    max-vl: 15
+    max-vl: 8
     punish: true
-    buffer: 3
+    buffer: 2
     decay: 2
     cancel: true
     # Hitbox-Vergroesserung fuer den Blickstrahl
@@ -186,9 +189,9 @@ checks:
     decay: 1
   killaura-wall:
     enabled: true
-    max-vl: 10
+    max-vl: 6
     punish: true
-    buffer: 2
+    buffer: 1
     decay: 2
     cancel: true
   killaura-noswing:
@@ -221,9 +224,9 @@ checks:
     max-deviation: 0.35
   autoclicker-cps:
     enabled: true
-    max-vl: 10
+    max-vl: 6
     punish: true
-    buffer: 2
+    buffer: 1
     decay: 2
     max-cps: 18
   autoclicker-consistency:
@@ -238,17 +241,17 @@ checks:
     min-cps: 9
   velocity:
     enabled: true
-    max-vl: 10
+    max-vl: 6
     punish: true
-    buffer: 2
+    buffer: 1
     decay: 2
     # Erlaubte Abweichung (Bloecke) beim ersten Knockback-Tick – erkennt Teil-Multiplikatoren, Reversal, Strafe, Lag
     tolerance: 0.02
   criticals:
     enabled: true
-    max-vl: 10
+    max-vl: 6
     punish: true
-    buffer: 2
+    buffer: 1
     decay: 2
     cancel: true
 
@@ -271,38 +274,38 @@ checks:
   # ── Movement (Prediction) ──────────────────────────────────
   prediction-gravity:
     enabled: true
-    max-vl: 20
+    max-vl: 10
     punish: true
-    buffer: 4
+    buffer: 2
     decay: 3
     cancel: true
     threshold: 0.03
   prediction-air:
     enabled: true
-    max-vl: 20
+    max-vl: 10
     punish: true
-    buffer: 4
+    buffer: 2
     decay: 3
     cancel: true
     threshold: 0.006
   prediction-jump:
     enabled: true
-    max-vl: 15
+    max-vl: 8
     punish: true
-    buffer: 2
+    buffer: 1
     decay: 2
     cancel: true
   groundspoof:
     enabled: true
-    max-vl: 15
+    max-vl: 8
     punish: true
-    buffer: 4
+    buffer: 2
     decay: 3
     # true = Fallschaden wird trotz NoFall nachtraeglich angewendet
     cancel: true
   timer:
     enabled: true
-    max-vl: 15
+    max-vl: 8
     punish: true
     buffer: 0
     decay: 3
@@ -313,14 +316,14 @@ checks:
 
   noslow:
     enabled: true
-    max-vl: 15
+    max-vl: 8
     punish: true
-    buffer: 4
+    buffer: 2
     decay: 3
     cancel: true
   phase:
     enabled: true
-    max-vl: 10
+    max-vl: 6
     punish: true
     buffer: 1
     decay: 2
@@ -350,6 +353,57 @@ checks:
     punish: true
     buffer: 1
     decay: 1
+
+  prediction-ground:
+    enabled: true
+    max-vl: 10
+    punish: true
+    buffer: 2
+    decay: 3
+    cancel: true
+    threshold: 0.008
+  step:
+    enabled: true
+    max-vl: 5
+    punish: true
+    buffer: 0
+    decay: 2
+    cancel: true
+  fastladder:
+    enabled: true
+    max-vl: 6
+    punish: true
+    buffer: 1
+    decay: 2
+    cancel: true
+  invmove:
+    enabled: true
+    max-vl: 6
+    punish: true
+    buffer: 3
+    decay: 2
+    cancel: true
+  noweb:
+    enabled: true
+    max-vl: 8
+    punish: true
+    buffer: 2
+    decay: 2
+    cancel: true
+  cheststealer:
+    enabled: true
+    max-vl: 5
+    punish: true
+    buffer: 1
+    decay: 2
+    cancel: true
+  fastuse:
+    enabled: true
+    max-vl: 5
+    punish: true
+    buffer: 0
+    decay: 2
+    cancel: true
 
 # ─────────────────────────────────────────────────────────────
 #  Anti-XRay (Abbau-Alerts) – auch ingame per /atlas xray (GUI) einstellbar

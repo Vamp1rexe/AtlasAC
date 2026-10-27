@@ -28,6 +28,11 @@ public final class MovementProcessor {
 			d.inVehicle = p.isInsideVehicle();
 			d.useTicks = p.hasActiveItem() ? d.useTicks + 1 : 0;
 			d.sneakTicks = p.isSneaking() ? d.sneakTicks + 1 : 0;
+			var topType = p.getOpenInventory().getTopInventory().getType();
+			boolean container = topType != org.bukkit.event.inventory.InventoryType.CRAFTING
+					&& topType != org.bukkit.event.inventory.InventoryType.CREATIVE
+					&& topType != org.bukkit.event.inventory.InventoryType.PLAYER;
+			d.containerOpenTicks = container ? d.containerOpenTicks + 1 : 0;
 			MoveSample s;
 			while ((s = d.moves.poll()) != null) {
 				if (process(d, p, s, tick, checks)) {
@@ -98,6 +103,32 @@ public final class MovementProcessor {
 			if (checks.phase.check(d, world, fromBox, box, Math.sqrt(dx * dx + dy * dy + dz * dz)) && checks.phase.cancel()) setback = true;
 			// Fluessigkeiten zaehlen sonst als "komplex" und waeren eine Luecke (Jesus / onGround ueber Wasser)
 			if (checks.jesus.check(d, Physics.overLiquidWithoutCollision(world, box), dy, s.onGround()) && checks.jesus.cancel()) setback = true;
+
+			if (consecutive) {
+				double h = Math.hypot(dx, dz), lastH = Math.hypot(d.lastDeltaX, d.lastDeltaZ);
+				double speedAttr = attr(p, org.bukkit.attribute.Attribute.MOVEMENT_SPEED, 0.1);
+				// Boden-Speed (auch ohne Springen) – Vanilla-Reibung + Beschleunigung
+				if (d.lastServerGround && !Physics.fluidNearby(world, box) && !Physics.standableEntitiesNearby(p, box)) {
+					double slip = Physics.slipperiness(world, d.lastX, d.lastY, d.lastZ);
+					double push = Math.min(0.3, 0.05 * Physics.pushingEntities(p, box));
+					if (checks.groundSpeed.check(d, h, lastH, slip, speedAttr, jumped, push) && checks.groundSpeed.cancel()) setback = true;
+				}
+				// Step: mehr als Step-Hoehe hoch, ohne den Boden zu verlassen
+				if (d.lastServerGround && serverGround && dy > 0) {
+					if (checks.step.check(d, dy, attr(p, org.bukkit.attribute.Attribute.STEP_HEIGHT, 0.6)) && checks.step.cancel()) setback = true;
+				}
+				// Laufen mit offener Kiste/Ofen
+				int pingTicks = (int) Math.ceil(Math.min(p.getPing(), 1000) / 50.0);
+				if (d.containerOpenTicks > pingTicks + 6 && d.lastServerGround && serverGround) {
+					if (checks.invMove.check(d, h) && checks.invMove.cancel()) setback = true;
+				}
+				// Spinnweben
+				if (Physics.inCobweb(world, box)) {
+					if (checks.noWeb.check(d, h, speedAttr) && checks.noWeb.cancel()) setback = true;
+				}
+			}
+		} else if (consecutive && p.isClimbing() && climbCheckAllowed(p, d, tick) && !d.lastServerGround) {
+			if (checks.fastLadder.check(d, dy) && checks.fastLadder.cancel()) setback = true;
 		}
 		if (!exempt && !Physics.complexNearby(world, box)) {
 			if (checks.groundSpoof.check(d, s.onGround(), serverGround)) d.spoofedFall = true;
@@ -157,6 +188,20 @@ public final class MovementProcessor {
 			d.lastLegit = new Location(world, s.x(), s.y(), s.z());
 		}
 		return false;
+	}
+
+	private static double attr(Player p, org.bukkit.attribute.Attribute a, double def) {
+		var inst = p.getAttribute(a);
+		return inst == null ? def : inst.getValue();
+	}
+
+	/** Wie movementExempt, nur dass Klettern hier gerade geprueft wird. */
+	private static boolean climbCheckAllowed(Player p, PlayerData d, int tick) {
+		GameMode gm = p.getGameMode();
+		if (gm == GameMode.CREATIVE || gm == GameMode.SPECTATOR || d.bypass) return false;
+		if (tick < d.exemptUntil || tick < d.movementExemptUntil || d.pendingVelocity != null) return false;
+		if (p.getAllowFlight() || p.isFlying() || p.isGliding() || p.isInsideVehicle() || p.isRiptiding() || p.isInWater()) return false;
+		return !p.hasPotionEffect(PotionEffectType.LEVITATION) && !p.hasPotionEffect(PotionEffectType.JUMP_BOOST);
 	}
 
 	private static boolean movementExempt(Player p, PlayerData d, int tick) {
