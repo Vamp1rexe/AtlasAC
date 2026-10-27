@@ -75,6 +75,7 @@ Paper-Plugin (26.3) mit Grim-artiger Packet-Analyse, starken PvP-Checks, Anti-XR
 Dauer-Format: `30m`, `12h`, `7d`, `2w`, `1mo`, `1y`, kombinierbar (`1d12h`) oder `permanent`.
 
 `atlasac.bypass` – Spieler wird nicht geprüft (Standard: niemand).
+`atlasac.bypass.mods` – darf mit verbotenen Mods/Clients joinen (z.B. Meteor zum Testen); Mods werden trotzdem erkannt und gemeldet, alle Cheat-Checks laufen normal weiter (Standard: niemand, auch nicht OPs).
 
 ## Hinweise
 - Öffentlich wird nur bei Bans gemeldet („Banned by Atlas AntiCheat | Dauer“), Kicks und Mutes sieht nur das Team.

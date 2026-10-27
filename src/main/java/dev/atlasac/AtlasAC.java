@@ -72,6 +72,7 @@ public final class AtlasAC extends JavaPlugin {
 		for (String sub : List.of("ban", "tempban", "ipban", "tempipban", "unban", "unbanip", "kick", "mute", "tempmute", "unmute", "freeze", "history")) {
 			registerPermission("atlasac." + sub, "Erlaubt /atlas " + sub, PermissionDefault.OP);
 		}
+		registerPermission(ModDetector.PERM_BYPASS_MODS, "Darf mit verbotenen Mods joinen (Cheat-Checks laufen weiter)", PermissionDefault.FALSE);
 		registerPermission("atlasac.fly", "Erlaubt /atlas fly", PermissionDefault.OP);
 		registerPermission("atlasac.fly.others", "Erlaubt /atlas fly <Spieler>", PermissionDefault.OP);
 		registerPermission(StaffModeManager.PERM_STAFF, "Erlaubt /staff (Staff-Modus)", PermissionDefault.OP);

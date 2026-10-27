@@ -53,6 +53,9 @@ public final class ModDetector implements Listener {
 	private record Probe(Location location, List<String> keys, long sentAt) {
 	}
 
+	/** Darf mit verbotenen Mods/Clients joinen (wird trotzdem erkannt und von allen Cheat-Checks geprueft). */
+	public static final String PERM_BYPASS_MODS = "atlasac.bypass.mods";
+
 	private final AtlasAC plugin;
 	private final Map<String, ModRule> rules = new LinkedHashMap<>();
 	private final Map<UUID, Probe> probes = new ConcurrentHashMap<>();
@@ -382,7 +385,7 @@ public final class ModDetector implements Listener {
 		String action = c == null ? "kick-then-ban" : c.getString("action", "kick-then-ban").toLowerCase(Locale.ROOT);
 		plugin.alerts().send("%prefix%<gold>Anti-Detection? <white>" + p.getName()
 				+ " <gray>hat nicht auf die Mod-Pruefung geantwortet" + (warned.contains(p.getUniqueId()) ? " <red>(bereits verwarnt)" : ""));
-		if (action.equals("alert") || bedrock(p) || p.hasPermission(AtlasAC.PERM_BYPASS)) return;
+		if (action.equals("alert") || bedrock(p) || p.hasPermission(AtlasAC.PERM_BYPASS) || p.hasPermission(PERM_BYPASS_MODS)) return;
 
 		PunishmentManager pm = plugin.punishments();
 		if (warned.contains(p.getUniqueId()) || action.equals("ban")) {
@@ -413,9 +416,14 @@ public final class ModDetector implements Listener {
 
 	private void detected(Player p, ModRule r, String evidence) {
 		if (!punished.add(p.getUniqueId())) return;
-		plugin.getLogger().warning("Mod erkannt: " + p.getName() + " -> " + r.display() + " (" + evidence + ")");
+		boolean bypass = p.hasPermission(PERM_BYPASS_MODS);
+		plugin.getLogger().warning("Mod erkannt: " + p.getName() + " -> " + r.display() + " (" + evidence + ")" + (bypass ? " [Mod-Bypass]" : ""));
 		plugin.alerts().send("%prefix%<dark_red><bold>MOD</bold> <white>" + p.getName() + " <gray>nutzt <red>" + Text.escape(r.display())
-				+ " <dark_gray>(" + Text.escape(evidence) + ")");
+				+ " <dark_gray>(" + Text.escape(evidence) + ")" + (bypass ? " <green>[Mod-Bypass – keine Strafe]" : ""));
+		if (bypass) {
+			punished.remove(p.getUniqueId());
+			return;
+		}
 		String reason = r.reason().replace("%mod%", r.display());
 		PunishmentManager pm = plugin.punishments();
 		PunishmentManager.Target target = new PunishmentManager.Target(p.getUniqueId(), p.getName(), PunishmentManager.ipOf(p));
