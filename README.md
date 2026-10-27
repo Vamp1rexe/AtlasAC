@@ -24,6 +24,8 @@ Paper-Plugin (26.3) mit Grim-artiger Packet-Analyse, starken PvP-Checks, Anti-XR
 
 **Anti-Dupe** – jedes nicht stapelbare Item bekommt eine versteckte ID. Gleiche ID an zwei Orten gleichzeitig → Kopie wird gelöscht, Alert ans Team, Spieler wird geflaggt (Standard: Kick).
 
+**Strafsystem** – eigener Kick-/Ban-Screen („Kicked by Atlas AntiCheat“ / „Banned by Atlas AntiCheat“ mit Fall-ID), Ban, Tempban, IP-Ban, Temp-IP-Ban, Mute, Freeze, Historie, Alt-Account-Alerts über die IP. Atlas kickt ab Werk bei jedem Check und bannt nach 3 Kicks in 24h automatisch für 7 Tage. Wer eingefroren den Server verlässt, wird 30 Tage gebannt. Daten liegen in `plugins/AtlasAC/data.yml`.
+
 ## Befehle
 | Befehl | Recht |
 |---|---|
@@ -32,11 +34,20 @@ Paper-Plugin (26.3) mit Grim-artiger Packet-Analyse, starken PvP-Checks, Anti-XR
 | `/atlas xray` · `/atlas xray stats <Spieler>` · `/atlas xray reset <Spieler>` | atlasac.command (Ändern im GUI: atlasac.admin) |
 | `/atlas dupe scan` · `/atlas dupe check` | atlasac.command |
 | `/atlas reload` | atlasac.admin |
+| `/atlas freeze <Spieler>` (nochmal = auftauen) | atlasac.freeze |
+| `/atlas kick <Spieler> [Grund]` | atlasac.kick |
+| `/atlas ban <Spieler> [Dauer] [Grund]` · `/atlas tempban <Spieler> <Dauer> [Grund]` | atlasac.ban / atlasac.tempban |
+| `/atlas ipban <Spieler\|IP> [Dauer] [Grund]` · `/atlas tempipban …` | atlasac.ipban / atlasac.tempipban |
+| `/atlas unban <Spieler> [-ip]` · `/atlas unbanip <Spieler\|IP>` | atlasac.unban / atlasac.unbanip |
+| `/atlas mute` · `/atlas tempmute` · `/atlas unmute` | atlasac.mute / tempmute / unmute |
+| `/atlas history <Spieler>` | atlasac.history |
+
+Dauer-Format: `30m`, `12h`, `7d`, `2w`, `1mo`, `1y`, kombinierbar (`1d12h`) oder `permanent`.
 
 `atlasac.bypass` – Spieler wird nicht geprüft (Standard: niemand).
 
 ## Hinweise
-- Strafe ist standardmäßig ein Kick (`punishment.commands`), Bans gibt es nicht automatisch.
+- Alle Checks kicken ab Werk (`punish: true`), Movement-Checks setzen zusätzlich zurück. Eskalation zum Tempban unter `punishment.auto-ban`.
 - Movement-Checks brauchen 1.21.2+-Clients (Tick-End-Packets); ältere Clients über ViaVersion werden davon ausgenommen.
 - Die Prediction ist eine vereinfachte Vanilla-Physik, kein vollständiger Grim-Simulator. Grenzwerte nach ersten Tests in der `config.yml` nachjustieren.
 - Anti-Dupe prüft Online-Inventare, Enderkisten, offene Container und Boden-Items – nicht unbeobachtete Kisten. Stapelbare Items bekommen keine ID, weil sie sonst nicht mehr stacken.

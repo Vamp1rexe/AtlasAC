@@ -12,6 +12,8 @@ import dev.atlasac.data.DataManager;
 import dev.atlasac.data.PlayerData;
 import dev.atlasac.dupe.DupeManager;
 import dev.atlasac.packet.AtlasPacketListener;
+import dev.atlasac.punish.FreezeManager;
+import dev.atlasac.punish.PunishmentManager;
 import dev.atlasac.xray.XrayGui;
 import dev.atlasac.xray.XrayManager;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
@@ -37,17 +39,28 @@ public final class AtlasAC extends JavaPlugin {
 	private XrayManager xray;
 	private XrayGui xrayGui;
 	private DupeManager dupe;
+	private PunishmentManager punishments;
+	private FreezeManager freeze;
 	private PacketListenerCommon packetListener;
+	private static AtlasAC instance;
+
+	public static AtlasAC instance() {
+		return instance;
+	}
 	private BukkitTask dupeTask;
 
 	@Override
 	public void onEnable() {
+		instance = this;
 		saveDefaultConfig();
 
 		registerPermission(AlertManager.PERM_ALERTS, "Empfaengt Atlas-Alerts", PermissionDefault.OP);
 		registerPermission(PERM_COMMAND, "Erlaubt /atlas", PermissionDefault.OP);
 		registerPermission(PERM_ADMIN, "Erlaubt /atlas reload und Aenderungen im XRay-GUI", PermissionDefault.OP);
 		registerPermission(PERM_BYPASS, "Wird von Atlas nicht geprueft", PermissionDefault.FALSE);
+		for (String sub : List.of("ban", "tempban", "ipban", "tempipban", "unban", "unbanip", "kick", "mute", "tempmute", "unmute", "freeze", "history")) {
+			registerPermission("atlasac." + sub, "Erlaubt /atlas " + sub, PermissionDefault.OP);
+		}
 
 		data = new DataManager();
 		alerts = new AlertManager(this);
@@ -59,12 +72,17 @@ public final class AtlasAC extends JavaPlugin {
 		xrayGui = new XrayGui(this);
 		dupe = new DupeManager(this);
 		dupe.reload();
+		punishments = new PunishmentManager(this);
+		punishments.load();
+		freeze = new FreezeManager(this);
 
 		var pm = getServer().getPluginManager();
 		pm.registerEvents(new AtlasListener(this), this);
 		pm.registerEvents(xray, this);
 		pm.registerEvents(xrayGui, this);
 		pm.registerEvents(dupe, this);
+		pm.registerEvents(punishments, this);
+		pm.registerEvents(freeze, this);
 
 		packetListener = PacketEvents.getAPI().getEventManager().registerListener(new AtlasPacketListener(this));
 
@@ -96,6 +114,7 @@ public final class AtlasAC extends JavaPlugin {
 		if (packetListener != null) {
 			PacketEvents.getAPI().getEventManager().unregisterListener(packetListener);
 		}
+		if (punishments != null) punishments.save();
 	}
 
 	private void scheduleDupeScan() {
@@ -144,5 +163,13 @@ public final class AtlasAC extends JavaPlugin {
 
 	public DupeManager dupe() {
 		return dupe;
+	}
+
+	public PunishmentManager punishments() {
+		return punishments;
+	}
+
+	public FreezeManager freeze() {
+		return freeze;
 	}
 }

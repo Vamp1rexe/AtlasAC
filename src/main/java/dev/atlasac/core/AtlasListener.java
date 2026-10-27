@@ -53,7 +53,7 @@ public final class AtlasListener implements Listener {
 		int tick = tick();
 		d.lastAttackServerTick = tick;
 		if (d.bypass || attacker.getGameMode() == GameMode.CREATIVE || attacker.getGameMode() == GameMode.SPECTATOR) return;
-		if (tick < d.exemptUntil) return;
+		if (tick < d.exemptUntil || plugin.freeze().isFrozen(attacker.getUniqueId())) return;
 
 		Entity target = event.getEntity();
 		PlayerData td = target instanceof Player tp ? plugin.data().get(tp) : null;

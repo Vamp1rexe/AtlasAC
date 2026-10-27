@@ -14,11 +14,78 @@ alerts:
   console: true
 
 punishment:
-  # Befehle, die beim Erreichen von max-vl ausgefuehrt werden (ohne fuehrenden /, laufen ueber die Konsole).
-  # Fuer LiteBans z.B.: "litebans:kick %player% Kicked by Atlas AntiCheat"
-  commands:
-    - "kick %player% Kicked by Atlas AntiCheat"
+  # Atlas kickt selbst mit dem Kick-Screen unten. Zusaetzliche Konsolen-Befehle (ohne fuehrenden /) optional:
+  commands: []
   broadcast: "%prefix%<red>%player% <gray>wurde von Atlas wegen <aqua>%check%</aqua> gekickt."
+  # Eskalation: so viele Atlas-Kicks innerhalb des Zeitfensters -> automatischer Tempban
+  auto-ban:
+    enabled: true
+    kicks: 3
+    within: 24h
+    duration: 7d
+    reason: "Wiederholte Cheat-Erkennung (%check%)"
+
+# ─────────────────────────────────────────────────────────────
+#  Screens (Kick / Ban) – mehrzeilig, MiniMessage
+#  Platzhalter: %reason% %staff% %duration% %expires% %id%
+# ─────────────────────────────────────────────────────────────
+screens:
+  kick: |-
+    <gradient:#7b5cff:#00d4ff><bold>ATLAS ANTICHEAT</bold></gradient>
+    <dark_gray>━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    <red><bold>Kicked by Atlas AntiCheat</bold>
+
+    <gray>Grund: <white>%reason%
+    <gray>Fall-ID: <white>#%id%
+
+    <dark_gray>Unfaire Vorteile werden hier nicht geduldet.
+  ban: |-
+    <gradient:#7b5cff:#00d4ff><bold>ATLAS ANTICHEAT</bold></gradient>
+    <dark_gray>━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    <dark_red><bold>Banned by Atlas AntiCheat</bold>
+
+    <gray>Grund: <white>%reason%
+    <gray>Dauer: <white>%duration%
+    <gray>Endet: <white>%expires%
+    <gray>Fall-ID: <white>#%id%
+
+    <dark_gray>Fehler? Melde dich mit deiner Fall-ID beim Team.
+  ipban: |-
+    <gradient:#7b5cff:#00d4ff><bold>ATLAS ANTICHEAT</bold></gradient>
+    <dark_gray>━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    <dark_red><bold>IP-Banned by Atlas AntiCheat</bold>
+
+    <gray>Grund: <white>%reason%
+    <gray>Dauer: <white>%duration%
+    <gray>Endet: <white>%expires%
+    <gray>Fall-ID: <white>#%id%
+
+    <dark_gray>Diese Verbindung ist gesperrt – auch fuer Zweit-Accounts.
+
+bans:
+  # Broadcast an alle Spieler (leer = aus)
+  broadcast: "%prefix%<red>%player% <gray>wurde von <white>%staff%</white> %action%. <dark_gray>(<gray>%reason%<dark_gray>)"
+  # Team bekommt einen Alert, wenn jemand mit der IP eines gebannten Accounts joint
+  alt-alerts: true
+
+freeze:
+  title: "<gradient:#7b5cff:#00d4ff><bold>EINGEFROREN</bold></gradient>"
+  subtitle: "<gray>Folge den Anweisungen des Teams"
+  message: "%prefix%<red>Du wurdest eingefroren. <gray>Verlasse den Server nicht – sonst wirst du automatisch gebannt."
+  # Bann, wenn ein eingefrorener Spieler den Server verlaesst (duration: permanent oder z.B. 30d)
+  logout-ban:
+    enabled: true
+    duration: 30d
+    reason: "Verlassen waehrend Freeze"
+  # Befehle, die eingefrorene Spieler noch nutzen duerfen
+  allowed-commands: [msg, tell, w, r, reply, helpop]
+
+mute:
+  message: "%prefix%<red>Du bist gemutet. <gray>Grund: <white>%reason% <dark_gray>| <gray>Endet: <white>%expires%"
+  blocked-commands: [msg, tell, w, r, reply, me, say, mail]
 
 violations:
   # Alle 60 Sekunden wird jede VL um "decay" des jeweiligen Checks reduziert
@@ -78,8 +145,8 @@ checks:
     decay: 1
   aim-sensitivity:
     enabled: true
-    max-vl: 30
-    punish: false
+    max-vl: 40
+    punish: true
     buffer: 12
     decay: 5
   aim-snap:
@@ -90,8 +157,8 @@ checks:
     decay: 2
   aim-lock:
     enabled: true
-    max-vl: 8
-    punish: false
+    max-vl: 6
+    punish: true
     buffer: 0
     decay: 2
     # Anzahl Treffer, ueber die die Zielpraezision ausgewertet wird
@@ -104,11 +171,11 @@ checks:
     punish: true
     buffer: 2
     decay: 2
-    max-cps: 20
+    max-cps: 18
   autoclicker-consistency:
     enabled: true
     max-vl: 10
-    punish: false
+    punish: true
     buffer: 2
     decay: 2
     # Standardabweichung der Klickabstaende (ms), unter der geflaggt wird
@@ -138,7 +205,7 @@ checks:
     punish: true
     buffer: 4
     decay: 3
-    cancel: false
+    cancel: true
     threshold: 0.03
   prediction-air:
     enabled: true
@@ -146,7 +213,7 @@ checks:
     punish: true
     buffer: 4
     decay: 3
-    cancel: false
+    cancel: true
     threshold: 0.006
   prediction-jump:
     enabled: true
@@ -154,7 +221,7 @@ checks:
     punish: true
     buffer: 2
     decay: 2
-    cancel: false
+    cancel: true
   groundspoof:
     enabled: true
     max-vl: 15

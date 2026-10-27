@@ -50,14 +50,14 @@ public final class ViolationManager {
 	}
 
 	public void punish(Player player, String reason) {
+		if (!player.isOnline()) return;
 		List<String> commands = plugin.getConfig().getStringList("punishment.commands");
 		for (String cmd : commands) {
 			String c = cmd.replace("%player%", player.getName()).replace("%check%", reason);
 			if (c.startsWith("/")) c = c.substring(1);
 			Bukkit.dispatchCommand(Bukkit.getConsoleSender(), c);
 		}
-		plugin.alerts().broadcast(plugin.getConfig().getString("punishment.broadcast", "")
-				.replace("%player%", player.getName()).replace("%check%", reason));
+		if (player.isOnline()) plugin.punishments().autoPunish(player, reason);
 	}
 
 	/** Regelmaessiger VL-Abbau. */

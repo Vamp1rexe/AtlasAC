@@ -140,6 +140,7 @@ public final class MovementProcessor {
 	private static boolean movementExempt(Player p, PlayerData d, int tick) {
 		GameMode gm = p.getGameMode();
 		if (gm == GameMode.CREATIVE || gm == GameMode.SPECTATOR) return true;
+		if (AtlasAC.instance().freeze().isFrozen(p.getUniqueId())) return true;
 		if (d.bypass || tick < d.exemptUntil || tick < d.movementExemptUntil || d.pendingVelocity != null) return true;
 		if (p.getAllowFlight() || p.isFlying() || p.isGliding() || p.isInsideVehicle() || p.isRiptiding()
 				|| p.isDead() || p.isClimbing() || p.isInWater() || p.isSwimming() || p.isSleeping()) return true;

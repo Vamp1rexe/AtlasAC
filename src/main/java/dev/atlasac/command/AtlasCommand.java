@@ -16,13 +16,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** /atlas – Hauptbefehl. */
 public final class AtlasCommand implements BasicCommand {
 	private final AtlasAC plugin;
+	private final PunishCommands punish;
 
 	public AtlasCommand(AtlasAC plugin) {
 		this.plugin = plugin;
+		this.punish = new PunishCommands(plugin);
 	}
 
 	@Override
@@ -81,7 +84,11 @@ public final class AtlasCommand implements BasicCommand {
 			}
 			case "xray" -> xray(s, args);
 			case "dupe" -> dupe(s, args);
-			default -> help(s);
+			default -> {
+				String sub = args[0].toLowerCase();
+				if (PunishCommands.SUBS.contains(sub)) punish.execute(s, sub, args);
+				else help(s);
+			}
 		}
 	}
 
@@ -154,6 +161,15 @@ public final class AtlasCommand implements BasicCommand {
 				"/atlas xray reset <Spieler> <gray>– Statistik zuruecksetzen",
 				"/atlas dupe scan <gray>– Sofort-Scan nach Dupes",
 				"/atlas dupe check <gray>– ID des Items in der Hand",
+				"/atlas freeze <Spieler> <gray>– Einfrieren / Auftauen",
+				"/atlas kick <Spieler> [Grund]",
+				"/atlas ban <Spieler> [Dauer] [Grund]",
+				"/atlas tempban <Spieler> <Dauer> [Grund]",
+				"/atlas ipban <Spieler|IP> [Dauer] [Grund]",
+				"/atlas tempipban <Spieler|IP> <Dauer> [Grund]",
+				"/atlas unban <Spieler> <gray>· <aqua>/atlas unbanip <Spieler|IP>",
+				"/atlas mute|tempmute|unmute <Spieler> [Dauer] [Grund]",
+				"/atlas history <Spieler> <gray>– Strafen-Historie",
 				"/atlas reload <gray>– Config neu laden")) {
 			s.sendMessage(Text.mm("<dark_gray> » <aqua>" + line));
 		}
@@ -164,16 +180,20 @@ public final class AtlasCommand implements BasicCommand {
 		List<String> out = new ArrayList<>();
 		if (args.length <= 1) {
 			out.addAll(List.of("alerts", "vl", "xray", "dupe", "reload"));
+			out.addAll(PunishCommands.SUBS);
 		} else if (args.length == 2) {
 			switch (args[0].toLowerCase()) {
 				case "xray" -> out.addAll(List.of("gui", "stats", "reset"));
 				case "dupe" -> out.addAll(List.of("scan", "check"));
 				case "vl", "violations" -> Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
 				default -> {
+					if (PunishCommands.SUBS.contains(args[0].toLowerCase())) Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
 				}
 			}
 		} else if (args.length == 3 && args[0].equalsIgnoreCase("xray")) {
 			Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
+		} else if (args.length == 3 && Set.of("tempban", "tempipban", "tempmute", "ban", "ipban", "mute").contains(args[0].toLowerCase())) {
+			out.addAll(List.of("30m", "1h", "12h", "1d", "7d", "30d", "permanent"));
 		}
 		String last = args.length == 0 ? "" : args[args.length - 1].toLowerCase();
 		out.removeIf(o -> !o.toLowerCase().startsWith(last));
