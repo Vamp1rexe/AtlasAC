@@ -2,6 +2,9 @@ package dev.atlasac.punish;
 
 import dev.atlasac.AtlasAC;
 import dev.atlasac.punish.Punishment.Type;
+import dev.atlasac.storage.SqlStorage;
+import dev.atlasac.storage.Storage;
+import dev.atlasac.storage.YamlStorage;
 import dev.atlasac.util.Durations;
 import dev.atlasac.util.Text;
 import io.papermc.paper.event.player.AsyncChatEvent;
@@ -9,7 +12,6 @@ import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -19,7 +21,6 @@ import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -30,6 +31,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
@@ -45,6 +49,12 @@ public final class PunishmentManager implements Listener {
 	private final AtlasAC plugin;
 	private final File file;
 	private final SecureRandom random = new SecureRandom();
+	private final ExecutorService io = Executors.newSingleThreadExecutor(r -> {
+		Thread t = new Thread(r, "AtlasAC-Storage");
+		t.setDaemon(true);
+		return t;
+	});
+	private volatile Storage storage;
 
 	private final Map<String, Punishment> punishments = new ConcurrentHashMap<>();
 	private final Map<UUID, String> names = new ConcurrentHashMap<>();
@@ -59,60 +69,93 @@ public final class PunishmentManager implements Listener {
 
 	// ───────────────────────── Laden / Speichern ─────────────────────────
 
+	/** Oeffnet den in storage.type gewaehlten Speicher; faellt bei Fehlern auf YAML zurueck. */
 	public void load() {
-		YamlConfiguration y = YamlConfiguration.loadConfiguration(file);
-		ConfigurationSection players = y.getConfigurationSection("players");
-		if (players != null) {
-			for (String key : players.getKeys(false)) {
-				try {
-					UUID uuid = UUID.fromString(key);
-					remember(uuid, players.getString(key + ".name"), players.getString(key + ".ip"));
-				} catch (IllegalArgumentException ignored) {
-				}
+		ConfigurationSection cfg = plugin.getConfig().getConfigurationSection("storage");
+		String type = cfg == null ? "yaml" : cfg.getString("type", "yaml").toLowerCase(Locale.ROOT);
+		YamlStorage yaml = new YamlStorage(file);
+		Storage chosen = yaml;
+		if (!type.equals("yaml") && !type.equals("local") && cfg != null) {
+			try {
+				SqlStorage.Dialect dialect = SqlStorage.Dialect.valueOf(type.equals("postgres") ? "POSTGRESQL" : type.toUpperCase(Locale.ROOT));
+				SqlStorage sql = new SqlStorage(dialect, cfg, plugin.getDataFolder());
+				sql.open();
+				chosen = sql;
+			} catch (Throwable ex) {
+				plugin.getLogger().severe("Datenbank (" + type + ") nicht erreichbar: " + ex.getMessage()
+						+ " – nutze lokale data.yml. Zugangsdaten unter storage: pruefen.");
 			}
 		}
-		ConfigurationSection ps = y.getConfigurationSection("punishments");
-		if (ps != null) {
-			for (String id : ps.getKeys(false)) {
-				ConfigurationSection s = ps.getConfigurationSection(id);
-				if (s == null) continue;
-				try {
-					punishments.put(id, new Punishment(id, Type.valueOf(s.getString("type", "BAN")), s.getString("target", ""),
-							s.getString("name", "?"), s.getString("reason", ""), s.getString("staff", "?"),
-							s.getLong("created"), s.getLong("expires", -1), s.getBoolean("active", true)));
-				} catch (IllegalArgumentException ignored) {
-				}
-			}
-		}
-	}
-
-	public synchronized void save() {
-		YamlConfiguration y = new YamlConfiguration();
-		for (Map.Entry<UUID, String> e : names.entrySet()) {
-			y.set("players." + e.getKey() + ".name", e.getValue());
-			String ip = ips.get(e.getKey());
-			if (ip != null) y.set("players." + e.getKey() + ".ip", ip);
-		}
-		for (Punishment p : punishments.values()) {
-			String b = "punishments." + p.id() + ".";
-			y.set(b + "type", p.type().name());
-			y.set(b + "target", p.target());
-			y.set(b + "name", p.name());
-			y.set(b + "reason", p.reason());
-			y.set(b + "staff", p.staff());
-			y.set(b + "created", p.created());
-			y.set(b + "expires", p.expires());
-			y.set(b + "active", p.active());
-		}
+		storage = chosen;
 		try {
-			y.save(file);
-		} catch (IOException ex) {
-			plugin.getLogger().severe("data.yml konnte nicht gespeichert werden: " + ex.getMessage());
+			// Erster Start mit Datenbank: vorhandene data.yml uebernehmen
+			if (storage != yaml && yaml.exists() && storage.isEmpty()) {
+				Storage.Snapshot old = yaml.load();
+				for (Storage.PlayerRow r : old.players()) storage.savePlayer(r);
+				for (Punishment p : old.punishments()) storage.savePunishment(p);
+				plugin.getLogger().info("data.yml in die Datenbank migriert (" + old.punishments().size() + " Strafen).");
+			}
+			apply(storage.load());
+		} catch (Exception ex) {
+			plugin.getLogger().severe("Strafen konnten nicht geladen werden: " + ex.getMessage());
+		}
+		plugin.getLogger().info("Speicher: " + storage.name());
+
+		if (storage.shared()) {
+			long every = Math.max(5, cfg.getLong("sync-interval-seconds", 30)) * 20L;
+			Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, () -> {
+				try {
+					apply(storage.load());
+				} catch (Exception ex) {
+					plugin.getLogger().warning("Datenbank-Sync fehlgeschlagen: " + ex.getMessage());
+				}
+			}, every, every);
 		}
 	}
 
-	private void saveAsync() {
-		Bukkit.getScheduler().runTaskAsynchronously(plugin, this::save);
+	private void apply(Storage.Snapshot snap) {
+		for (Storage.PlayerRow r : snap.players()) remember(r.uuid(), r.name(), r.ip());
+		for (Punishment p : snap.punishments()) punishments.put(p.id(), p);
+	}
+
+	public String storageName() {
+		return storage == null ? "-" : storage.name();
+	}
+
+	/** Beim Abschalten: ausstehende Schreibvorgaenge abwarten. */
+	public void save() {
+		io.shutdown();
+		try {
+			if (!io.awaitTermination(10, TimeUnit.SECONDS)) plugin.getLogger().warning("Nicht alle Strafen konnten gespeichert werden.");
+		} catch (InterruptedException ignored) {
+			Thread.currentThread().interrupt();
+		}
+		if (storage != null) storage.close();
+	}
+
+	private void store(Punishment p) {
+		punishments.put(p.id(), p);
+		Storage s = storage;
+		if (s == null || io.isShutdown()) return;
+		io.execute(() -> {
+			try {
+				s.savePunishment(p);
+			} catch (Exception ex) {
+				plugin.getLogger().severe("Strafe #" + p.id() + " konnte nicht gespeichert werden: " + ex.getMessage());
+			}
+		});
+	}
+
+	private void storePlayer(UUID uuid, String name, String ip) {
+		Storage s = storage;
+		if (s == null || io.isShutdown()) return;
+		io.execute(() -> {
+			try {
+				s.savePlayer(new Storage.PlayerRow(uuid, name, ip));
+			} catch (Exception ex) {
+				plugin.getLogger().warning("Spieler " + name + " konnte nicht gespeichert werden: " + ex.getMessage());
+			}
+		});
 	}
 
 	private void remember(UUID uuid, String name, String ip) {
@@ -173,8 +216,7 @@ public final class PunishmentManager implements Listener {
 		long now = System.currentTimeMillis();
 		long expires = type == Type.KICK ? 0 : duration < 0 ? -1 : now + duration;
 		Punishment p = new Punishment(newId(), type, target, name, reason, staff, now, expires, type != Type.KICK);
-		punishments.put(p.id(), p);
-		saveAsync();
+		store(p);
 		return p;
 	}
 
@@ -186,7 +228,7 @@ public final class PunishmentManager implements Listener {
 		// alte Bans ersetzen
 		for (Punishment old : List.copyOf(punishments.values())) {
 			if (old.type() == Type.BAN && old.active() && old.target().equals(t.uuid().toString())) {
-				punishments.put(old.id(), old.deactivate());
+				store(old.deactivate());
 			}
 		}
 		Punishment p = create(Type.BAN, t.uuid().toString(), t.name(), reason, staff, duration);
@@ -199,7 +241,7 @@ public final class PunishmentManager implements Listener {
 	public Punishment ipBan(Target t, String reason, String staff, long duration) {
 		String ip = t.ip();
 		for (Punishment old : List.copyOf(punishments.values())) {
-			if (old.type() == Type.IPBAN && old.active() && old.target().equals(ip)) punishments.put(old.id(), old.deactivate());
+			if (old.type() == Type.IPBAN && old.active() && old.target().equals(ip)) store(old.deactivate());
 		}
 		Punishment p = create(Type.IPBAN, ip, t.name(), reason, staff, duration);
 		Component screen = screen(p);
@@ -212,7 +254,7 @@ public final class PunishmentManager implements Listener {
 
 	public Punishment mute(Target t, String reason, String staff, long duration) {
 		for (Punishment old : List.copyOf(punishments.values())) {
-			if (old.type() == Type.MUTE && old.active() && old.target().equals(t.uuid().toString())) punishments.put(old.id(), old.deactivate());
+			if (old.type() == Type.MUTE && old.active() && old.target().equals(t.uuid().toString())) store(old.deactivate());
 		}
 		Punishment p = create(Type.MUTE, t.uuid().toString(), t.name(), reason, staff, duration);
 		Player online = Bukkit.getPlayer(t.uuid());
@@ -271,11 +313,10 @@ public final class PunishmentManager implements Listener {
 		int n = 0;
 		for (Punishment p : List.copyOf(punishments.values())) {
 			if (p.type() == type && p.active() && p.target().equals(target)) {
-				punishments.put(p.id(), p.deactivate());
+				store(p.deactivate());
 				n++;
 			}
 		}
-		if (n > 0) saveAsync();
 		return n;
 	}
 
@@ -341,6 +382,14 @@ public final class PunishmentManager implements Listener {
 
 	@EventHandler(priority = EventPriority.LOW)
 	public void onPreLogin(AsyncPlayerPreLoginEvent event) {
+		Storage s = storage;
+		if (s != null && s.shared()) {
+			try {
+				for (Punishment p : s.loadFor(event.getUniqueId().toString(), event.getAddress().getHostAddress())) punishments.put(p.id(), p);
+			} catch (Exception ex) {
+				plugin.getLogger().warning("Login-Check gegen Datenbank fehlgeschlagen, nutze Cache: " + ex.getMessage());
+			}
+		}
 		Punishment ban = active(Type.BAN, event.getUniqueId().toString());
 		if (ban == null) ban = active(Type.IPBAN, event.getAddress().getHostAddress());
 		if (ban != null) event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, screen(ban));
@@ -351,7 +400,7 @@ public final class PunishmentManager implements Listener {
 		Player p = event.getPlayer();
 		String ip = ipOf(p);
 		remember(p.getUniqueId(), p.getName(), ip);
-		saveAsync();
+		storePlayer(p.getUniqueId(), p.getName(), ip);
 		if (ip == null || !plugin.getConfig().getBoolean("bans.alt-alerts", true)) return;
 		Set<UUID> accounts = accountsByIp.get(ip);
 		if (accounts == null) return;

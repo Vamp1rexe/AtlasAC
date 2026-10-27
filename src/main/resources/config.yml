@@ -65,6 +65,31 @@ screens:
 
     <dark_gray>Diese Verbindung ist gesperrt – auch fuer Zweit-Accounts.
 
+# ─────────────────────────────────────────────────────────────
+#  Speicher fuer Bans, Mutes, Kicks und Spieler-IPs
+#  type: yaml       – lokal in plugins/AtlasAC/data.yml (Standard)
+#        sqlite     – lokal in einer SQLite-Datei
+#        mysql | mariadb | postgresql – externe Datenbank (mehrere Server teilen sich die Bans)
+#  Treiber werden beim Start automatisch geladen. Nach einer Aenderung: Server neu starten.
+#  Beim ersten Start mit Datenbank wird eine vorhandene data.yml automatisch uebernommen.
+# ─────────────────────────────────────────────────────────────
+storage:
+  type: yaml
+  sqlite-file: atlas.db
+  host: localhost
+  port: 3306
+  database: atlasac
+  username: root
+  password: ""
+  table-prefix: "atlas_"
+  pool-size: 5
+  # Bans/Mutes anderer Server so oft neu laden (nur MySQL/MariaDB/PostgreSQL)
+  sync-interval-seconds: 30
+  # Zusaetzliche JDBC-Optionen
+  properties:
+    useSSL: false
+    characterEncoding: utf8
+
 bans:
   # Broadcast an alle Spieler (leer = aus)
   broadcast: "%prefix%<red>%player% <gray>wurde von <white>%staff%</white> %action%. <dark_gray>(<gray>%reason%<dark_gray>)"
@@ -80,7 +105,7 @@ freeze:
     enabled: true
     duration: 30d
     reason: "Verlassen waehrend Freeze"
-  # Befehle, die eingefrorene Spieler noch nutzen duerfen
+  # Befehle, die eingefrorene Spieler noch nutzen duerfen – ingame: /atlas freezecmd add|remove|list
   allowed-commands: [msg, tell, w, r, reply, helpop]
 
 mute:

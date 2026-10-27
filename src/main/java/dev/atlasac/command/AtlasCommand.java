@@ -84,6 +84,7 @@ public final class AtlasCommand implements BasicCommand {
 			}
 			case "xray" -> xray(s, args);
 			case "dupe" -> dupe(s, args);
+			case "freezecmd" -> freezeCommands(s, args);
 			default -> {
 				String sub = args[0].toLowerCase();
 				if (PunishCommands.SUBS.contains(sub)) punish.execute(s, sub, args);
@@ -151,8 +152,46 @@ public final class AtlasCommand implements BasicCommand {
 		}
 	}
 
+	/** /atlas freezecmd add|remove|list [Befehl] – erlaubte Befehle waehrend Freeze. */
+	private void freezeCommands(CommandSender s, String[] args) {
+		if (!s.hasPermission(AtlasAC.PERM_ADMIN)) {
+			msg(s, "<red>Keine Rechte.");
+			return;
+		}
+		List<String> allowed = new ArrayList<>(plugin.getConfig().getStringList("freeze.allowed-commands"));
+		String action = args.length > 1 ? args[1].toLowerCase() : "list";
+		if (action.equals("list")) {
+			msg(s, "<gray>Waehrend Freeze erlaubt: " + (allowed.isEmpty() ? "<red>keine"
+					: "<white>/" + String.join("<gray>, <white>/", allowed)));
+			return;
+		}
+		if (args.length < 3 || !(action.equals("add") || action.equals("remove"))) {
+			msg(s, "<gray>/atlas freezecmd <white>add|remove <Befehl> <gray>oder <white>/atlas freezecmd list");
+			return;
+		}
+		String cmd = args[2].toLowerCase().replaceFirst("^/", "");
+		int colon = cmd.indexOf(':');
+		if (colon >= 0) cmd = cmd.substring(colon + 1);
+		if (action.equals("add")) {
+			if (allowed.contains(cmd)) {
+				msg(s, "<yellow>/" + cmd + " ist schon erlaubt.");
+				return;
+			}
+			allowed.add(cmd);
+			msg(s, "<green>/" + cmd + " ist waehrend Freeze jetzt erlaubt.");
+		} else {
+			if (!allowed.remove(cmd)) {
+				msg(s, "<yellow>/" + cmd + " war nicht erlaubt.");
+				return;
+			}
+			msg(s, "<green>/" + cmd + " ist waehrend Freeze jetzt gesperrt.");
+		}
+		plugin.getConfig().set("freeze.allowed-commands", allowed);
+		plugin.saveConfig();
+	}
+
 	private void help(CommandSender s) {
-		msg(s, "<white>Atlas AntiCheat <gray>v" + plugin.getPluginMeta().getVersion());
+		msg(s, "<white>Atlas AntiCheat <gray>v" + plugin.getPluginMeta().getVersion() + " <dark_gray>| <gray>Speicher: <white>" + plugin.punishments().storageName());
 		for (String line : List.of(
 				"/atlas alerts <gray>– Alerts an/aus",
 				"/atlas vl <Spieler> <gray>– Violations anzeigen",
@@ -162,6 +201,7 @@ public final class AtlasCommand implements BasicCommand {
 				"/atlas dupe scan <gray>– Sofort-Scan nach Dupes",
 				"/atlas dupe check <gray>– ID des Items in der Hand",
 				"/atlas freeze <Spieler> <gray>– Einfrieren / Auftauen",
+				"/atlas freezecmd add|remove|list <gray>– Erlaubte Befehle im Freeze",
 				"/atlas kick <Spieler> [Grund]",
 				"/atlas ban <Spieler> [Dauer] [Grund]",
 				"/atlas tempban <Spieler> <Dauer> [Grund]",
@@ -179,17 +219,20 @@ public final class AtlasCommand implements BasicCommand {
 	public Collection<String> suggest(CommandSourceStack source, String[] args) {
 		List<String> out = new ArrayList<>();
 		if (args.length <= 1) {
-			out.addAll(List.of("alerts", "vl", "xray", "dupe", "reload"));
+			out.addAll(List.of("alerts", "vl", "xray", "dupe", "reload", "freezecmd"));
 			out.addAll(PunishCommands.SUBS);
 		} else if (args.length == 2) {
 			switch (args[0].toLowerCase()) {
 				case "xray" -> out.addAll(List.of("gui", "stats", "reset"));
 				case "dupe" -> out.addAll(List.of("scan", "check"));
+				case "freezecmd" -> out.addAll(List.of("add", "remove", "list"));
 				case "vl", "violations" -> Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
 				default -> {
 					if (PunishCommands.SUBS.contains(args[0].toLowerCase())) Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
 				}
 			}
+		} else if (args.length == 3 && args[0].equalsIgnoreCase("freezecmd") && args[1].equalsIgnoreCase("remove")) {
+			out.addAll(plugin.getConfig().getStringList("freeze.allowed-commands"));
 		} else if (args.length == 3 && args[0].equalsIgnoreCase("xray")) {
 			Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
 		} else if (args.length == 3 && Set.of("tempban", "tempipban", "tempmute", "ban", "ipban", "mute").contains(args[0].toLowerCase())) {

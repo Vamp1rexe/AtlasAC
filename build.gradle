@@ -24,6 +24,8 @@ repositories {
 dependencies {
 	compileOnly "io.papermc.paper:paper-api:${project.paper_version}"
 	compileOnly "com.github.retrooper:packetevents-spigot:${project.packetevents_version}"
+	// Wird zur Laufzeit von AtlasLoader nachgeladen (nur bei Datenbank-Speicherung)
+	compileOnly "com.zaxxer:HikariCP:6.3.0"
 }
 
 tasks.withType(JavaCompile).configureEach {
