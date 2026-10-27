@@ -37,6 +37,8 @@ Paper-Plugin (26.3) mit Grim-artiger Packet-Analyse, starken PvP-Checks, Anti-XR
 
 **Mod-Erkennung** – Client-Brand und Mod-Channels werden unscharf mit einer Liste verglichen (`autototem` erkennt auch `AuToTootem_x30975`), dazu eine Translation-Key-Probe per unsichtbarem Schild. Hack-Clients (Meteor, Wurst, Baritone, LiquidBounce …): sofort 30 Tage Ban. Einzelne Mods (XRay, AutoTotem, ESP, KillAura-Mods …): Kick, der 3. Kick in 24h wird zum Ban. Freecam ist erlaubt. Anti-Detection-Mods (keine Antwort auf die Probe): erst Kick mit Aufforderung, den Mod zu entfernen, beim nächsten Mal 30 Tage Ban. Strafe pro Mod frei einstellbar (`mod-detection.mods`), eigene Namen einfach ergänzen, testen mit `/atlas mods test <Name>`.
 
+**Discord-Webhook** – meldet jeden Ban/IP-Ban mit Spieler, Grund, Dauer, Ablaufdatum, Fall-ID und Kopf (`discord.webhook-url`).
+
 **Anti-XRay** – Alert, wenn in einem Zeitfenster zu viele Erze einer Gruppe abgebaut werden (inkl. Erz/Stein-Verhältnis). Einstellbar per GUI (`/atlas xray`) oder `config.yml`.
 
 **Anti-Dupe** – jedes nicht stapelbare Item bekommt eine versteckte ID. Gleiche ID an zwei Orten gleichzeitig → Kopie wird gelöscht, Alert ans Team, Spieler wird geflaggt (Standard: Kick).

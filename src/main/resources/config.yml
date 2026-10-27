@@ -96,6 +96,14 @@ bans:
   # Team bekommt einen Alert, wenn jemand mit der IP eines gebannten Accounts joint
   alt-alerts: true
 
+# Discord-Webhook – meldet nur Bans und IP-Bans (manuell, automatisch, Mod-Erkennung)
+discord:
+  enabled: false
+  webhook-url: ""
+  username: "Atlas AntiCheat"
+  avatar-url: ""
+  color: "#E53935"
+
 freeze:
   title: "<gradient:#7b5cff:#00d4ff><bold>EINGEFROREN</bold></gradient>"
   subtitle: "<gray>Folge den Anweisungen des Teams"

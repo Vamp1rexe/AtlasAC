@@ -14,6 +14,7 @@ import dev.atlasac.dupe.DupeManager;
 import dev.atlasac.packet.AtlasPacketListener;
 import dev.atlasac.punish.FreezeManager;
 import dev.atlasac.mods.ModDetector;
+import dev.atlasac.discord.DiscordWebhook;
 import dev.atlasac.command.StaffCommand;
 import dev.atlasac.gui.AdminGui;
 import dev.atlasac.gui.MenuListener;
@@ -49,6 +50,7 @@ public final class AtlasAC extends JavaPlugin {
 	private StaffModeManager staffMode;
 	private AdminGui adminGui;
 	private ModDetector mods;
+	private DiscordWebhook discord;
 	private PacketListenerCommon packetListener;
 	private static AtlasAC instance;
 
@@ -75,6 +77,7 @@ public final class AtlasAC extends JavaPlugin {
 		registerPermission(AdminGui.PERM_GUI, "Erlaubt das Admin-GUI", PermissionDefault.OP);
 
 		data = new DataManager();
+		discord = new DiscordWebhook(this);
 		alerts = new AlertManager(this);
 		violations = new ViolationManager(this);
 		checks = new CheckManager(this);
@@ -207,5 +210,9 @@ public final class AtlasAC extends JavaPlugin {
 
 	public ModDetector mods() {
 		return mods;
+	}
+
+	public DiscordWebhook discord() {
+		return discord;
 	}
 }

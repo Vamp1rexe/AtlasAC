@@ -241,7 +241,10 @@ public final class PunishmentManager implements Listener {
 		Punishment p = create(Type.BAN, t.uuid().toString(), t.name(), reason, staff, duration);
 		Player online = Bukkit.getPlayer(t.uuid());
 		if (online != null) online.kick(screen(p));
-		if (announce) announce(t.name(), staff, duration < 0 ? "permanent gebannt" : "fuer " + Durations.format(duration) + " gebannt", reason);
+		if (announce) {
+			announce(t.name(), staff, duration < 0 ? "permanent gebannt" : "fuer " + Durations.format(duration) + " gebannt", reason);
+			plugin.discord().sendBan(p, t.uuid().toString(), false);
+		}
 		return p;
 	}
 
@@ -256,6 +259,7 @@ public final class PunishmentManager implements Listener {
 			if (ip.equals(ipOf(online))) online.kick(screen);
 		}
 		announce(t.name(), staff, duration < 0 ? "permanent IP-gebannt" : "fuer " + Durations.format(duration) + " IP-gebannt", reason);
+		plugin.discord().sendBan(p, t.uuid() == null ? null : t.uuid().toString(), true);
 		return p;
 	}
 
