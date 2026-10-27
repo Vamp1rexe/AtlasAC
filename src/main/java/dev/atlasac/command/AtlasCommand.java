@@ -86,6 +86,7 @@ public final class AtlasCommand implements BasicCommand {
 			case "dupe" -> dupe(s, args);
 			case "freezecmd" -> freezeCommands(s, args);
 			case "mods" -> mods(s, args);
+			case "fly" -> fly(s, args);
 			case "gui" -> {
 				if (!(s instanceof Player p)) {
 					msg(s, "<red>Nur ingame.");
@@ -229,6 +230,44 @@ public final class AtlasCommand implements BasicCommand {
 		}
 	}
 
+	/** /atlas fly [Spieler] – Fliegen an/aus (Survival/Adventure). */
+	private void fly(CommandSender s, String[] args) {
+		Player t;
+		if (args.length > 1) {
+			if (!s.hasPermission("atlasac.fly.others")) {
+				msg(s, "<red>Keine Rechte (atlasac.fly.others)");
+				return;
+			}
+			t = Bukkit.getPlayerExact(args[1]);
+			if (t == null) {
+				msg(s, "<red>Spieler nicht online.");
+				return;
+			}
+		} else if (s instanceof Player p) {
+			if (!s.hasPermission("atlasac.fly")) {
+				msg(s, "<red>Keine Rechte (atlasac.fly)");
+				return;
+			}
+			t = p;
+		} else {
+			msg(s, "<red>/atlas fly <Spieler>");
+			return;
+		}
+		boolean enable = !t.getAllowFlight();
+		t.setAllowFlight(enable);
+		if (!enable) {
+			t.setFlying(false);
+			t.setFallDistance(0);
+		}
+		String state = enable ? "<green>aktiviert" : "<red>deaktiviert";
+		if (t.equals(s)) {
+			msg(s, "<gray>Fliegen " + state + "<gray>.");
+		} else {
+			msg(s, "<gray>Fliegen fuer <white>" + t.getName() + " " + state + "<gray>.");
+			msg(t, "<gray>Fliegen wurde " + state + "<gray>.");
+		}
+	}
+
 	private void help(CommandSender s) {
 		msg(s, "<white>Atlas AntiCheat <gray>v" + plugin.getPluginMeta().getVersion() + " <dark_gray>| <gray>Speicher: <white>" + plugin.punishments().storageName());
 		for (String line : List.of(
@@ -240,6 +279,7 @@ public final class AtlasCommand implements BasicCommand {
 				"/atlas dupe scan <gray>– Sofort-Scan nach Dupes",
 				"/atlas dupe check <gray>– ID des Items in der Hand",
 				"/atlas gui [Spieler] <gray>– Admin-GUI",
+				"/atlas fly [Spieler] <gray>– Fliegen an/aus",
 				"/staff <gray>– Staff-Modus (Vanish + Werkzeuge) · <aqua>/staff vanish",
 				"/atlas freeze <Spieler> <gray>– Einfrieren / Auftauen",
 				"/atlas freezecmd add|remove|list <gray>– Erlaubte Befehle im Freeze",
@@ -261,7 +301,7 @@ public final class AtlasCommand implements BasicCommand {
 	public Collection<String> suggest(CommandSourceStack source, String[] args) {
 		List<String> out = new ArrayList<>();
 		if (args.length <= 1) {
-			out.addAll(List.of("alerts", "vl", "xray", "dupe", "reload", "freezecmd", "gui", "mods"));
+			out.addAll(List.of("alerts", "vl", "xray", "dupe", "reload", "freezecmd", "gui", "mods", "fly"));
 			out.addAll(PunishCommands.SUBS);
 		} else if (args.length == 2) {
 			switch (args[0].toLowerCase()) {
@@ -269,7 +309,7 @@ public final class AtlasCommand implements BasicCommand {
 				case "dupe" -> out.addAll(List.of("scan", "check"));
 				case "freezecmd" -> out.addAll(List.of("add", "remove", "list"));
 				case "mods" -> out.addAll(List.of("check", "info", "test"));
-				case "vl", "violations", "gui" -> Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
+				case "vl", "violations", "gui", "fly" -> Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
 				default -> {
 					if (PunishCommands.SUBS.contains(args[0].toLowerCase())) Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
 				}

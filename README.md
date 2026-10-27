@@ -68,6 +68,7 @@ Paper-Plugin (26.3) mit Grim-artiger Packet-Analyse, starken PvP-Checks, Anti-XR
 | `/atlas history <Spieler>` | atlasac.history |
 | `/staff` · `/staff vanish` · `/staff gui` | atlasac.staff (Vanish sehen: atlasac.vanish.see, fremde Inventare bearbeiten: atlasac.staff.invedit) |
 | `/atlas gui [Spieler]` | atlasac.gui |
+| `/atlas fly [Spieler]` | atlasac.fly (für andere: atlasac.fly.others) |
 | `/atlas mods check\|info <Spieler>` · `/atlas mods test <Name>` | atlasac.admin |
 | `/atlas freezecmd add\|remove\|list <Befehl>` | atlasac.admin |
 

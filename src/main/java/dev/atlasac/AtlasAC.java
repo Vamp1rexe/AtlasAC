@@ -72,6 +72,8 @@ public final class AtlasAC extends JavaPlugin {
 		for (String sub : List.of("ban", "tempban", "ipban", "tempipban", "unban", "unbanip", "kick", "mute", "tempmute", "unmute", "freeze", "history")) {
 			registerPermission("atlasac." + sub, "Erlaubt /atlas " + sub, PermissionDefault.OP);
 		}
+		registerPermission("atlasac.fly", "Erlaubt /atlas fly", PermissionDefault.OP);
+		registerPermission("atlasac.fly.others", "Erlaubt /atlas fly <Spieler>", PermissionDefault.OP);
 		registerPermission(StaffModeManager.PERM_STAFF, "Erlaubt /staff (Staff-Modus)", PermissionDefault.OP);
 		registerPermission(StaffModeManager.PERM_SEE_VANISH, "Sieht Spieler im Vanish", PermissionDefault.OP);
 		registerPermission(StaffModeManager.PERM_INV_EDIT, "Darf fremde Inventare bearbeiten", PermissionDefault.OP);
