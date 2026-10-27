@@ -63,6 +63,7 @@ public final class AtlasAC extends JavaPlugin {
 	public void onEnable() {
 		instance = this;
 		saveDefaultConfig();
+		mergeDefaults();
 
 		registerPermission(AlertManager.PERM_ALERTS, "Empfaengt Atlas-Alerts", PermissionDefault.OP);
 		registerPermission(PERM_COMMAND, "Erlaubt /atlas", PermissionDefault.OP);
@@ -149,8 +150,15 @@ public final class AtlasAC extends JavaPlugin {
 		dupeTask = Bukkit.getScheduler().runTaskTimer(this, dupe::scanAll, interval, interval);
 	}
 
+	/** Neue Optionen aus Updates (z.B. neue Erz-Gruppen, Checks) in die bestehende config.yml uebernehmen. */
+	private void mergeDefaults() {
+		getConfig().options().copyDefaults(true);
+		saveConfig();
+	}
+
 	public void reloadAll() {
 		reloadConfig();
+		mergeDefaults();
 		checks.reload();
 		xray.reload();
 		dupe.reload();

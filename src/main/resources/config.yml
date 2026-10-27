@@ -119,6 +119,8 @@ freeze:
 staff-mode:
   # Beim Betreten von /staff automatisch unsichtbar werden
   vanish-on-enter: true
+  # Im Staff-Modus rot leuchten, sobald man aus dem Vanish geht
+  glow-when-visible: true
 
 # Schnell-Strafen im Admin-GUI (/atlas gui -> Spieler -> Bestrafen)
 # type: kick | mute | ban | ipban   duration: z.B. 30m, 1d, 7d, 30d, permanent
@@ -387,8 +389,57 @@ xray:
       display: "Golderz"
       icon: GOLD_ORE
       materials: [GOLD_ORE, DEEPSLATE_GOLD_ORE]
-      enabled: false
+      enabled: true
+      max-blocks: 32
+      window-minutes: 10
+    nether-gold:
+      display: "Nethergolderz"
+      icon: NETHER_GOLD_ORE
+      materials: [NETHER_GOLD_ORE]
+      enabled: true
+      max-blocks: 64
+      window-minutes: 10
+    iron:
+      display: "Eisenerz"
+      icon: IRON_ORE
+      materials: [IRON_ORE, DEEPSLATE_IRON_ORE]
+      enabled: true
+      max-blocks: 96
+      window-minutes: 10
+    copper:
+      display: "Kupfererz"
+      icon: COPPER_ORE
+      materials: [COPPER_ORE, DEEPSLATE_COPPER_ORE]
+      enabled: true
+      max-blocks: 128
+      window-minutes: 10
+    coal:
+      display: "Kohleerz"
+      icon: COAL_ORE
+      materials: [COAL_ORE, DEEPSLATE_COAL_ORE]
+      enabled: true
+      max-blocks: 160
+      window-minutes: 10
+    redstone:
+      display: "Redstoneerz"
+      icon: REDSTONE_ORE
+      materials: [REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE]
+      enabled: true
+      max-blocks: 64
+      window-minutes: 10
+    lapis:
+      display: "Lapislazulierz"
+      icon: LAPIS_ORE
+      materials: [LAPIS_ORE, DEEPSLATE_LAPIS_ORE]
+      enabled: true
       max-blocks: 40
+      window-minutes: 10
+    quartz:
+      display: "Netherquarzerz"
+      icon: NETHER_QUARTZ_ORE
+      materials: [NETHER_QUARTZ_ORE]
+      enabled: true
+      max-blocks: 128
       window-minutes: 10
     spawner:
       display: "Spawner"

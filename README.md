@@ -39,7 +39,7 @@ Paper-Plugin (26.3) mit Grim-artiger Packet-Analyse, starken PvP-Checks, Anti-XR
 
 **Discord-Webhook** – meldet jeden Ban/IP-Ban mit Spieler, Grund, Dauer, Ablaufdatum, Fall-ID und Kopf (`discord.webhook-url`).
 
-**Anti-XRay** – Alert, wenn in einem Zeitfenster zu viele Erze einer Gruppe abgebaut werden (inkl. Erz/Stein-Verhältnis). Einstellbar per GUI (`/atlas xray`) oder `config.yml`.
+**Anti-XRay** – alle Erze (Kohle, Kupfer, Eisen, Gold, Nethergold, Redstone, Lapis, Diamant, Smaragd, Quarz, Antiker Schrott) plus Spawner. Alert, wenn in einem Zeitfenster zu viele Erze einer Gruppe abgebaut werden (inkl. Erz/Stein-Verhältnis). Einstellbar per GUI (`/atlas xray`) oder `config.yml`.
 
 **Anti-Dupe** – jedes nicht stapelbare Item bekommt eine versteckte ID. Gleiche ID an zwei Orten gleichzeitig → Kopie wird gelöscht, Alert ans Team, Spieler wird geflaggt (Standard: Kick).
 
@@ -77,6 +77,7 @@ Dauer-Format: `30m`, `12h`, `7d`, `2w`, `1mo`, `1y`, kombinierbar (`1d12h`) oder
 - Alle Checks kicken ab Werk (`punish: true`), Movement-Checks setzen zusätzlich zurück. Eskalation zum Tempban unter `punishment.auto-ban`.
 - Movement-Checks brauchen 1.21.2+-Clients (Tick-End-Packets); ältere Clients über ViaVersion werden davon ausgenommen.
 - Die Prediction ist eine vereinfachte Vanilla-Physik, kein vollständiger Grim-Simulator. Grenzwerte nach ersten Tests in der `config.yml` nachjustieren.
+- Bei Updates werden neue Optionen automatisch in die bestehende `config.yml` ergänzt, eigene Werte bleiben.
 - Anti-Dupe prüft Online-Inventare, Enderkisten, offene Container und Boden-Items – nicht unbeobachtete Kisten. Stapelbare Items bekommen keine ID, weil sie sonst nicht mehr stacken.
 
 ## Build

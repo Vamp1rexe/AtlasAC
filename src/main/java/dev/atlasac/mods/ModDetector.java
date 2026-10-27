@@ -59,6 +59,13 @@ public final class ModDetector implements Listener {
 	private final Map<UUID, Set<String>> channels = new ConcurrentHashMap<>();
 	private final Set<UUID> punished = ConcurrentHashMap.newKeySet();
 	private final Set<UUID> warned = ConcurrentHashMap.newKeySet();
+	/** Letztes Ergebnis der Schild-Probe pro Spieler (fuer die Uebersicht). */
+	private final Map<UUID, ProbeResult> probeResults = new ConcurrentHashMap<>();
+
+	public enum ProbeStatus {NOT_RUN, PENDING, CLEAN, DETECTED, NO_ANSWER}
+
+	public record ProbeResult(ProbeStatus status, List<String> resolved, long time) {
+	}
 
 	public ModDetector(AtlasAC plugin) {
 		this.plugin = plugin;
@@ -250,6 +257,7 @@ public final class ModDetector implements Listener {
 			lines.add(b.build());
 		}
 		probes.put(p.getUniqueId(), new Probe(loc, keys, System.currentTimeMillis()));
+		probeResults.put(p.getUniqueId(), new ProbeResult(ProbeStatus.PENDING, List.of(), System.currentTimeMillis()));
 		p.sendBlockChange(loc, Material.OAK_SIGN.createBlockData());
 		p.sendSignChange(loc, lines);
 		p.openVirtualSign(Position.block(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()), Side.FRONT);
@@ -264,6 +272,7 @@ public final class ModDetector implements Listener {
 			Probe pr = probes.remove(p.getUniqueId());
 			if (pr == null || !p.isOnline()) return;
 			restore(p, pr.location());
+			probeResults.put(p.getUniqueId(), new ProbeResult(ProbeStatus.NO_ANSWER, List.of(), System.currentTimeMillis()));
 			antiDetection(p);
 		}, timeout);
 	}
@@ -293,6 +302,20 @@ public final class ModDetector implements Listener {
 
 	/** @return true, wenn ein Mod erkannt wurde */
 	private boolean evaluate(Player p, List<String> keys, List<Component> lines) {
+		List<String> resolved = new ArrayList<>();
+		for (int line = 0; line < 4; line++) {
+			int from = line * KEYS_PER_LINE;
+			if (from >= keys.size()) break;
+			String text = line < lines.size() ? Text.plain(lines.get(line)) : "";
+			String[] parts = text.split("\\|", -1);
+			for (int i = from; i < Math.min(keys.size(), from + KEYS_PER_LINE); i++) {
+				int idx = i - from;
+				String part = idx < parts.length ? parts[idx] : FALLBACK;
+				if (!part.isEmpty() && !part.equals(FALLBACK)) resolved.add(keys.get(i) + " = " + part);
+			}
+		}
+		probeResults.put(p.getUniqueId(), new ProbeResult(resolved.isEmpty() ? ProbeStatus.CLEAN : ProbeStatus.DETECTED,
+				resolved, System.currentTimeMillis()));
 		for (int line = 0; line < 4; line++) {
 			int from = line * KEYS_PER_LINE;
 			if (from >= keys.size()) break;
@@ -415,10 +438,76 @@ public final class ModDetector implements Listener {
 		if (p.isOnline() && !punished.contains(p.getUniqueId())) sendProbe(p);
 	}
 
-	public String describe(Player p) {
+	// ───────────────────────── Uebersicht ─────────────────────────
+
+	/** Ein Mod (Channel-Namespace) mit seinen Channels und ggf. der Regel, die zutrifft. */
+	public record ModEntry(String id, List<String> channels, ModRule rule) {
+	}
+
+	public record Report(String brand, String loader, List<ModEntry> mods, ProbeResult probe, boolean warned) {
+	}
+
+	private static final Set<String> LOADER_NAMESPACES = Set.of("minecraft", "fabric", "c", "forge", "neoforge", "quilt", "fml");
+
+	public Report report(Player p) {
 		Set<String> all = new LinkedHashSet<>(p.getListeningPluginChannels());
 		Set<String> extra = channels.get(p.getUniqueId());
 		if (extra != null) all.addAll(extra);
-		return "Brand: " + p.getClientBrandName() + " | Channels: " + (all.isEmpty() ? "-" : String.join(", ", all));
+		Map<String, List<String>> byNs = new java.util.TreeMap<>();
+		boolean fabric = false, forge = false, neoforge = false, quilt = false;
+		for (String ch : all) {
+			int colon = ch.indexOf(':');
+			String ns = colon > 0 ? ch.substring(0, colon) : ch;
+			String path = colon > 0 ? ch.substring(colon + 1) : "";
+			if (ns.startsWith("fabric")) fabric = true;
+			if (ns.equals("forge") || ns.equals("fml")) forge = true;
+			if (ns.equals("neoforge")) neoforge = true;
+			if (ns.startsWith("quilt")) quilt = true;
+			if (LOADER_NAMESPACES.contains(ns) || ns.startsWith("fabric")) continue;
+			byNs.computeIfAbsent(ns, k -> new ArrayList<>()).add(path);
+		}
+		String brand = p.getClientBrandName();
+		String b = brand == null ? "" : brand.toLowerCase(Locale.ROOT);
+		String loader = neoforge || b.contains("neoforge") ? "NeoForge"
+				: forge || b.contains("forge") ? "Forge"
+				: quilt || b.contains("quilt") ? "Quilt"
+				: fabric || b.contains("fabric") ? "Fabric"
+				: b.equals("vanilla") ? "Vanilla" : brand == null ? "unbekannt" : brand;
+		List<ModEntry> mods = new ArrayList<>();
+		for (Map.Entry<String, List<String>> e : byNs.entrySet()) mods.add(new ModEntry(e.getKey(), e.getValue(), match(e.getKey())));
+		ProbeResult probe = probeResults.getOrDefault(p.getUniqueId(), new ProbeResult(ProbeStatus.NOT_RUN, List.of(), 0));
+		return new Report(brand == null ? "unbekannt" : brand, loader, mods, probe, warned.contains(p.getUniqueId()));
+	}
+
+	public static String probeText(ProbeResult r) {
+		return switch (r.status()) {
+			case NOT_RUN -> "<gray>noch nicht geprueft";
+			case PENDING -> "<yellow>laeuft …";
+			case CLEAN -> "<green>sauber (keine Mod-Keys)";
+			case DETECTED -> "<red>Mod-Keys gefunden (" + r.resolved().size() + ")";
+			case NO_ANSWER -> "<gold>keine Antwort (Anti-Detection?)";
+		};
+	}
+
+	/** Mehrzeilige Chat-Uebersicht fuer /atlas mods info. */
+	public List<String> describe(Player p) {
+		Report r = report(p);
+		List<String> out = new ArrayList<>();
+		out.add("<dark_gray>━━━━━━━━ <white><bold>" + p.getName() + "</bold> <dark_gray>━━━━━━━━");
+		out.add("<gray>Client: <white>" + Text.escape(r.brand()) + " <dark_gray>| <gray>Loader: <white>" + r.loader());
+		out.add("<gray>Schild-Probe: " + probeText(r.probe()) + (r.warned() ? " <red>(verwarnt)" : ""));
+		for (String k : r.probe().resolved()) out.add("<dark_gray>  » <red>" + Text.escape(k));
+		if (r.mods().isEmpty()) {
+			out.add("<gray>Mods mit Channels: <white>keine");
+		} else {
+			out.add("<gray>Mods mit Channels <dark_gray>(" + r.mods().size() + ")<gray>:");
+			for (ModEntry m : r.mods()) {
+				String state = m.rule() == null ? "<green>✔" : "<red>✘ " + Text.escape(m.rule().display());
+				out.add("<dark_gray>  » " + state + " <white>" + Text.escape(m.id()) + " <dark_gray>(" + m.channels().size() + " Channel"
+						+ (m.channels().size() == 1 ? "" : "s") + ")");
+			}
+		}
+		out.add("<dark_gray>Hinweis: Mods ohne Netzwerk-Channel sind nur ueber die Schild-Probe sichtbar.");
+		return out;
 	}
 }

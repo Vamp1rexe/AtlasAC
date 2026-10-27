@@ -155,16 +155,76 @@ public final class AdminGui {
 		m.set(24, Menu.item(Material.BOOK, "<white><bold>Historie", "<gray>Alle Strafen ansehen"), e -> openHistory(viewer, id));
 		m.set(25, Menu.item(Material.IRON_AXE, "<red><bold>Bestrafen", "<gray>Kick, Mute, Ban, IP-Ban"), e -> openPunish(viewer, id));
 
-		m.set(31, Menu.item(Material.SPYGLASS, "<gold><bold>Mods pruefen", "<gray>Brand, Channels und", "<gray>Translation-Probe erneut", "<gray>ausfuehren"), e -> {
+		var report = plugin.mods().report(t);
+		long flagged = report.mods().stream().filter(x -> x.rule() != null).count();
+		m.set(31, Menu.item(Material.SPYGLASS, "<gold><bold>Mods & Client",
+				"<gray>Loader: <white>" + report.loader(),
+				"<gray>Mods mit Channels: <white>" + report.mods().size() + (flagged > 0 ? " <red>(" + flagged + " verboten)" : ""),
+				"<gray>Schild-Probe: " + dev.atlasac.mods.ModDetector.probeText(report.probe()),
+				"", "<yellow>Klicken fuer Details"), e -> openMods(viewer, id));
+		m.set(40, Menu.item(Material.ARROW, "<yellow>« Zurueck"), e -> openList(viewer, 0));
+		m.fill(Material.BLACK_STAINED_GLASS_PANE).open(viewer);
+	}
+
+	// ───────────────────────── Mods ─────────────────────────
+
+	public void openMods(Player viewer, UUID id) {
+		Player t = Bukkit.getPlayer(id);
+		if (t == null) {
+			msg(viewer, "<red>Spieler ist nicht mehr online.");
+			return;
+		}
+		var r = plugin.mods().report(t);
+		Menu m = new Menu(6, TITLE + "Mods von " + t.getName());
+		List<String> info = new ArrayList<>();
+		info.add("<gray>Client-Brand: <white>" + Text.escape(r.brand()));
+		info.add("<gray>Mod-Loader: <white>" + r.loader());
+		info.add("<gray>Version: <white>" + version(t));
+		info.add("<gray>Schild-Probe: " + dev.atlasac.mods.ModDetector.probeText(r.probe()));
+		if (r.warned()) info.add("<red>Verwarnt (Anti-Detection)");
+		for (String k : r.probe().resolved()) info.add("<red>» " + Text.escape(k));
+		m.set(4, head(t, "<white><bold>" + t.getName(), info));
+
+		int slot = 9;
+		for (var mod : r.mods()) {
+			if (slot >= 45) break;
+			List<String> lore = new ArrayList<>();
+			if (mod.rule() != null) {
+				lore.add("<red><bold>VERBOTEN: " + Text.escape(mod.rule().display()));
+				lore.add("<gray>Strafe: <white>" + mod.rule().action()
+						+ (mod.rule().action().contains("ban") ? " " + Durations.format(mod.rule().duration()) : ""));
+				lore.add("");
+			}
+			lore.add("<gray>Channels:");
+			int shown = 0;
+			for (String ch : mod.channels()) {
+				if (shown++ >= 8) {
+					lore.add("<dark_gray>  … +" + (mod.channels().size() - 8));
+					break;
+				}
+				lore.add("<dark_gray>  » <white>" + Text.escape(ch.isEmpty() ? "-" : ch));
+			}
+			m.set(slot++, Menu.item(mod.rule() != null ? Material.RED_CONCRETE : Material.LIME_CONCRETE,
+					(mod.rule() != null ? "<red><bold>" : "<green>") + Text.escape(mod.id()), lore));
+		}
+		if (r.mods().isEmpty()) {
+			m.set(22, Menu.item(Material.GRAY_DYE, "<gray>Keine Mods mit Channels",
+					"<gray>Vanilla oder nur Client-Mods", "<gray>ohne Netzwerk-Channel."));
+		}
+		m.set(47, Menu.item(Material.BOOK, "<white>Hinweis",
+				"<gray>Der Server sieht nur Mods, die", "<gray>Netzwerk-Channels registrieren", "<gray>oder in der Schild-Probe auffallen.",
+				"<gray>Reine Client-Mods ohne Channel", "<gray>sind hier nicht sichtbar."));
+		m.set(49, Menu.item(Material.ARROW, "<yellow>« Zurueck"), e -> openPlayer(viewer, id));
+		m.set(51, Menu.item(Material.SPYGLASS, "<gold><bold>Erneut pruefen", "<gray>Brand, Channels und", "<gray>Schild-Probe neu ausfuehren"), e -> {
 			if (!viewer.hasPermission(AtlasAC.PERM_ADMIN)) {
 				msg(viewer, "<red>Keine Rechte (" + AtlasAC.PERM_ADMIN + ")");
 				return;
 			}
-			viewer.closeInventory();
-			msg(viewer, "<gray>" + Text.escape(plugin.mods().describe(t)));
 			plugin.mods().recheck(t);
+			Bukkit.getScheduler().runTaskLater(plugin, () -> {
+				if (viewer.isOnline() && viewer.getOpenInventory().getTopInventory().getHolder(false) instanceof Menu) openMods(viewer, id);
+			}, 40L);
 		});
-		m.set(40, Menu.item(Material.ARROW, "<yellow>« Zurueck"), e -> openList(viewer, 0));
 		m.fill(Material.BLACK_STAINED_GLASS_PANE).open(viewer);
 	}
 

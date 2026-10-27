@@ -221,7 +221,7 @@ public final class AtlasCommand implements BasicCommand {
 			return;
 		}
 		if (sub.equals("info")) {
-			msg(s, "<white>" + t.getName() + "<gray>: " + Text.escape(plugin.mods().describe(t)));
+			for (String line : plugin.mods().describe(t)) s.sendMessage(Text.mm(line));
 		} else {
 			plugin.mods().recheck(t);
 			msg(s, "<gray>Mod-Pruefung fuer <white>" + t.getName() + " <gray>gestartet.");

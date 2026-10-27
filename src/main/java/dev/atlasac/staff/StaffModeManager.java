@@ -117,6 +117,7 @@ public final class StaffModeManager implements Listener {
 		var data = plugin.data().get(p);
 		if (data != null) data.bypass = true;
 		if (plugin.getConfig().getBoolean("staff-mode.vanish-on-enter", true)) setVanished(p, true);
+		else updateGlow(p);
 		msg(p, "<green>Staff-Modus aktiviert. <gray>Nochmal <white>/staff</white> zum Verlassen.");
 		plugin.alerts().send("%prefix%<aqua>" + p.getName() + " <gray>ist jetzt im Staff-Modus.");
 	}
@@ -170,6 +171,7 @@ public final class StaffModeManager implements Listener {
 		File f = file(p);
 		if (!f.exists()) return;
 		YamlConfiguration y = YamlConfiguration.loadConfiguration(f);
+		updateGlow(p);
 		p.getInventory().clear();
 		ItemStack[] contents = new ItemStack[p.getInventory().getSize()];
 		ConfigurationSection inv = y.getConfigurationSection("inventory");
@@ -219,6 +221,43 @@ public final class StaffModeManager implements Listener {
 			for (Player other : Bukkit.getOnlinePlayers()) other.showPlayer(plugin, p);
 		}
 		if (inStaffMode(p)) giveTools(p);
+		updateGlow(p);
+	}
+
+	// ───────────────────────── Rotes Leuchten (sichtbar im Staff-Modus) ─────────────────────────
+
+	private static final String GLOW_TEAM = "atlas_staff";
+	private final Map<UUID, String> previousTeam = new ConcurrentHashMap<>();
+
+	private org.bukkit.scoreboard.Team glowTeam() {
+		org.bukkit.scoreboard.Scoreboard board = Bukkit.getScoreboardManager().getMainScoreboard();
+		org.bukkit.scoreboard.Team team = board.getTeam(GLOW_TEAM);
+		if (team == null) team = board.registerNewTeam(GLOW_TEAM);
+		team.color(net.kyori.adventure.text.format.NamedTextColor.RED);
+		return team;
+	}
+
+	/** Im Staff-Modus und sichtbar -> rot leuchten, sonst nicht. */
+	public void updateGlow(Player p) {
+		boolean glow = inStaffMode(p) && !isVanished(p) && plugin.getConfig().getBoolean("staff-mode.glow-when-visible", true);
+		org.bukkit.scoreboard.Team team = glowTeam();
+		String entry = p.getName();
+		if (glow) {
+			org.bukkit.scoreboard.Team current = team.getScoreboard().getEntryTeam(entry);
+			if (current != null && !current.getName().equals(GLOW_TEAM)) previousTeam.put(p.getUniqueId(), current.getName());
+			team.addEntry(entry);
+			p.setGlowing(true);
+		} else {
+			p.setGlowing(false);
+			if (team.hasEntry(entry)) {
+				team.removeEntry(entry);
+				String prev = previousTeam.remove(p.getUniqueId());
+				if (prev != null) {
+					org.bukkit.scoreboard.Team old = team.getScoreboard().getTeam(prev);
+					if (old != null) old.addEntry(entry);
+				}
+			}
+		}
 	}
 
 	public void toggleVanish(Player p) {
