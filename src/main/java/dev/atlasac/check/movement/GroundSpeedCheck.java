@@ -19,14 +19,14 @@ public final class GroundSpeedCheck extends Check {
 
 	@Override
 	protected void onReload() {
-		threshold = cfg.getDouble("threshold", 0.008);
+		threshold = cfg.getDouble("threshold", 0.012);
 	}
 
-	public boolean check(PlayerData data, double horizontal, double lastHorizontal, double slipperiness,
+	public boolean check(PlayerData data, double horizontal, double lastHorizontal, double friction, double slipperiness,
 						 double speedAttribute, boolean jumped, double extra) {
 		if (!enabled()) return false;
 		double accel = speedAttribute * (0.21600002 / (slipperiness * slipperiness * slipperiness));
-		double max = lastHorizontal * slipperiness * 0.91 + accel + (jumped ? 0.2 : 0) + threshold + extra;
+		double max = lastHorizontal * friction + accel + (jumped ? 0.2 : 0) + threshold + extra;
 		if (horizontal > max && horizontal > 0.15) {
 			if (bufferUp(data.buffers, 1)) {
 				flag(data, "speed=" + Text.fmt(horizontal) + " max=" + Text.fmt(max) + (jumped ? " (Sprung)" : ""));

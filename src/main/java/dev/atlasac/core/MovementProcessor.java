@@ -108,10 +108,14 @@ public final class MovementProcessor {
 				double h = Math.hypot(dx, dz), lastH = Math.hypot(d.lastDeltaX, d.lastDeltaZ);
 				double speedAttr = attr(p, org.bukkit.attribute.Attribute.MOVEMENT_SPEED, 0.1);
 				// Boden-Speed (auch ohne Springen) – Vanilla-Reibung + Beschleunigung
-				if (d.lastServerGround && !Physics.fluidNearby(world, box) && !Physics.standableEntitiesNearby(p, box)) {
+				// Vanilla: delta(n) = delta(n-1) * Reibung(n-1) + Beschleunigung(n). Reibung(n-1) haengt vom Boden zu
+				// Beginn des VORHERIGEN Ticks ab (nach einer Landung also noch 0.91) – sonst Fehlflags beim Sprint-Springen.
+				if (d.lastServerGround && d.hasLastDelta && !Physics.fluidNearby(world, box) && !Physics.standableEntitiesNearby(p, box)) {
 					double slip = Physics.slipperiness(world, d.lastX, d.lastY, d.lastZ);
 					double push = Math.min(0.3, 0.05 * Physics.pushingEntities(p, box));
-					if (checks.groundSpeed.check(d, h, lastH, slip, speedAttr, jumped, push) && checks.groundSpeed.cancel()) setback = true;
+					// Sprint-Status kann zwischen Packet und Auswertung wechseln -> Sprint-Tempo immer erlauben
+					double groundSpeedAttr = p.isSprinting() ? speedAttr : speedAttr * 1.3;
+					if (checks.groundSpeed.check(d, h, lastH, d.frictionAfterLast, slip, groundSpeedAttr, jumped, push) && checks.groundSpeed.cancel()) setback = true;
 				}
 				// Step: mehr als Step-Hoehe hoch, ohne den Boden zu verlassen
 				if (d.lastServerGround && serverGround && dy > 0) {
@@ -148,7 +152,7 @@ public final class MovementProcessor {
 					if (!Physics.standableEntitiesNearby(p, box)) {
 						if (checks.gravity.check(d, dy, d.lastDeltaY) && checks.gravity.cancel()) setback = true;
 						double push = Math.min(0.3, 0.05 * Physics.pushingEntities(p, box));
-						if (checks.air.check(d, h, lastH, push) && checks.air.cancel()) setback = true;
+						if (checks.air.check(d, h, lastH * d.frictionAfterLast / Physics.AIR_FRICTION, push) && checks.air.cancel()) setback = true;
 					}
 				}
 			}
@@ -169,6 +173,8 @@ public final class MovementProcessor {
 		d.lastDeltaY = dy;
 		d.lastDeltaZ = dz;
 		d.hasLastDelta = consecutive;
+		// Reibung, die am Ende DIESES Ticks angewendet wurde: Boden zu Beginn dieses Ticks = lastServerGround
+		d.frictionAfterLast = d.lastServerGround ? Physics.slipperiness(world, d.lastX, d.lastY, d.lastZ) * 0.91 : 0.91;
 		d.lastServerGround = serverGround;
 		d.lastClientGround = s.onGround();
 		d.serverAirTicks = serverGround ? 0 : d.serverAirTicks + 1;

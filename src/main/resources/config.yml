@@ -363,7 +363,7 @@ checks:
     buffer: 2
     decay: 3
     cancel: true
-    threshold: 0.008
+    threshold: 0.012
   step:
     enabled: true
     max-vl: 5

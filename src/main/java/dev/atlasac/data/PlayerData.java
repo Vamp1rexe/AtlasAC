@@ -77,6 +77,8 @@ public final class PlayerData {
 	public int useTicks;
 	public int sneakTicks;
 	public int jesusTicks;
+	/** Reibung, die Vanilla am Ende des letzten Ticks angewendet hat (haengt vom Boden zu BEGINN dieses Ticks ab). */
+	public double frictionAfterLast = 0.91;
 	public int containerOpenTicks;
 	public final ArrayDeque<Long> containerClicks = new ArrayDeque<>();
 	public int useStartTick = -1;
