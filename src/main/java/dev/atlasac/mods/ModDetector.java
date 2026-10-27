@@ -398,7 +398,8 @@ public final class ModDetector implements Listener {
 		PunishmentManager.Target target = new PunishmentManager.Target(p.getUniqueId(), p.getName(), PunishmentManager.ipOf(p));
 		switch (r.action()) {
 			case "alert" -> punished.remove(p.getUniqueId());
-			case "kick" -> pm.kick(p, reason, PunishmentManager.STAFF_ATLAS, true);
+			// Kick zaehlt zur Eskalation: 3. Atlas-Kick in 24h = Tempban (punishment.auto-ban)
+			case "kick" -> pm.autoPunish(p, r.display(), reason);
 			case "ipban" -> {
 				pm.ipBan(target, reason, PunishmentManager.STAFF_ATLAS, r.duration());
 				pm.ban(target, reason, PunishmentManager.STAFF_ATLAS, r.duration(), false);

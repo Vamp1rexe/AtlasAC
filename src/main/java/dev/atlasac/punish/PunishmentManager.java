@@ -279,7 +279,11 @@ public final class PunishmentManager implements Listener {
 
 	/** Automatische Strafe durch einen Check: Kick + Eskalation zum Tempban. */
 	public void autoPunish(Player player, String check) {
-		String reason = "Cheating erkannt (" + check + ")";
+		autoPunish(player, check, "Cheating erkannt (" + check + ")");
+	}
+
+	/** Kick mit Eskalation: der x-te Atlas-Kick im Zeitfenster wird zum Tempban (punishment.auto-ban). */
+	public void autoPunish(Player player, String check, String reason) {
 		ConfigurationSection ab = plugin.getConfig().getConfigurationSection("punishment.auto-ban");
 		if (ab != null && ab.getBoolean("enabled", true)) {
 			long window = Durations.parse(ab.getString("within", "24h"));

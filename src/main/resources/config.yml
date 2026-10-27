@@ -397,7 +397,9 @@ xray:
 #                     "autototem" erkennt auch "AuToTootem_x30975"
 #  max-distance     – optional: erlaubte Tippfehler (Standard: 0 bei <=4 Zeichen, 1 bei <=8, sonst 2)
 #  translation-keys – Uebersetzungs-Keys des Mods fuer die Schild-Probe (exakt)
-#  punishment       – ban | ipban | kick | alert     duration: z.B. 7d, 30d, permanent
+#  punishment       – ban | ipban | kick | alert     duration: z.B. 7d, 30d, permanent (nur bei ban/ipban)
+#                     kick zaehlt zur Eskalation: der 3. Atlas-Kick in 24h wird ein Ban (siehe punishment.auto-ban)
+#  Freecam ist erlaubt und deshalb nicht in der Liste.
 #  Eigene Eintraege einfach unter mods: hinzufuegen. Test: /atlas mods test <Name>
 # ─────────────────────────────────────────────────────────────
 mod-detection:
@@ -496,39 +498,32 @@ mod-detection:
       duration: 30d
       reason: "Hack-Client/Mod (Hack-Client)"
       max-distance: 0
-    freecam:
-      display: "Freecam"
-      names: [freecam]
-      translation-keys: [key.freecam.toggle]
-      punishment: ban
-      duration: 7d
-      reason: "Hack-Client/Mod (Freecam)"
     xray:
       display: "XRay-Mod"
       names: [xray, advancedxray]
       translation-keys: []
-      punishment: ban
+      punishment: kick
       duration: 7d
       reason: "Hack-Client/Mod (XRay-Mod)"
     autototem:
       display: "AutoTotem"
       names: [autototem]
       translation-keys: []
-      punishment: ban
+      punishment: kick
       duration: 7d
       reason: "Hack-Client/Mod (AutoTotem)"
     combat-hacks:
       display: "Kampf-Hack"
       names: [killaura, triggerbot, autoclicker, aimbot, aimassist, crystalaura]
       translation-keys: []
-      punishment: ban
+      punishment: kick
       duration: 30d
       reason: "Hack-Client/Mod (Kampf-Hack)"
     esp:
       display: "ESP/Tracer"
       names: [chestesp, playeresp, tracers]
       translation-keys: []
-      punishment: ban
+      punishment: kick
       duration: 7d
       reason: "Hack-Client/Mod (ESP/Tracer)"
       max-distance: 0
